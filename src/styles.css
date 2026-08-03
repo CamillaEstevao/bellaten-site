@@ -1321,7 +1321,7 @@ th {
 
     .hero {
         aspect-ratio: 984/488;
-        background-image: url('./assets/hero-bellaten-mobile.jpg');
+        background-image: url('./assets/hero-bellaten-mobile.png');
         background-position: center
     }
 
@@ -1956,7 +1956,7 @@ textarea {
         width: 100%;
         min-height: 0 !important;
         aspect-ratio: 984 / 488;
-        background-image: url('./assets/hero-bellaten-mobile.jpg');
+        background-image: url('./assets/hero-bellaten-mobile.png');
         background-repeat: no-repeat;
         background-position: center center;
         background-size: cover;
@@ -2149,7 +2149,7 @@ textarea {
 /*
   Mantém o banner desktop mais nítido, evitando esticar demais a arte.
   Continue usando o arquivo:
-  src/assets/hero-bellaten.jpg
+  src/assets/hero-bellaten.png
 
   Se você tiver uma versão em PNG ou em resolução maior, pode trocar
   o nome do arquivo abaixo sem alterar o restante do CSS.
@@ -2160,7 +2160,7 @@ textarea {
     height: auto;
     aspect-ratio: 2048 / 567;
     background-color: #050505;
-    background-image: url('./assets/hero-bellaten.jpg');
+    background-image: url('./assets/hero-bellaten.png');
     background-repeat: no-repeat;
     background-position: center center;
     background-size: contain;
@@ -2172,7 +2172,7 @@ textarea {
         width: 100%;
         aspect-ratio: 2048 / 567;
         background-color: #050505;
-        background-image: url('./assets/hero-bellaten.jpg');
+        background-image: url('./assets/hero-bellaten.png');
         background-repeat: no-repeat;
         background-position: center center;
         background-size: contain;
@@ -2258,5 +2258,158 @@ textarea {
         right: 14px;
         width: 44px;
         height: 44px;
+    }
+}
+
+/* ===== EFEITO PARALLAX DO BANNER ===== */
+
+/*
+  Parallax suave no desktop.
+  No mobile o efeito é desativado para evitar travamentos e cortes,
+  especialmente em iPhone e navegadores Android.
+*/
+
+@media (min-width: 901px) {
+    .hero {
+        position: relative;
+        isolation: isolate;
+        background-attachment: fixed;
+        background-position: center 74px;
+        transition: background-position .25s ease-out;
+    }
+
+    .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(
+                90deg,
+                rgba(0, 0, 0, .08) 0%,
+                transparent 38%,
+                transparent 68%,
+                rgba(0, 0, 0, .08) 100%
+            );
+    }
+
+    .hero-click {
+        z-index: 2;
+    }
+}
+
+/* Movimento sutil ao passar o mouse no banner. */
+@media (min-width: 901px) and (hover: hover) {
+    .hero {
+        background-size: 102% auto;
+        transition:
+            background-size .7s cubic-bezier(.2, .7, .2, 1),
+            filter .7s ease;
+    }
+
+    .hero:hover {
+        background-size: 105% auto;
+        filter: saturate(1.06) contrast(1.02);
+    }
+}
+
+/* Mobile: mantém a arte nítida, estável e sem parallax. */
+@media (max-width: 900px) {
+    .hero {
+        background-attachment: scroll !important;
+        background-position: center center !important;
+        filter: none;
+    }
+}
+
+/* Respeita usuários que preferem menos animação. */
+@media (prefers-reduced-motion: reduce) {
+    .hero {
+        background-attachment: scroll !important;
+        transition: none !important;
+    }
+}
+
+/* ===== CORREÇÃO DO PARALLAX SEM CORTAR O BANNER ===== */
+
+/*
+  O corte estava acontecendo porque o banner estava com zoom no hover
+  e com posicionamento deslocado. Aqui o efeito continua suave,
+  mas sem ampliar a arte a ponto de cortar logo ou produtos.
+*/
+
+@media (min-width: 901px) {
+    .hero {
+        position: relative;
+        isolation: isolate;
+        width: 100%;
+        min-height: 0;
+        height: auto;
+        aspect-ratio: 2048 / 567;
+        overflow: hidden;
+        background-color: #050505;
+        background-image: url('./assets/hero-bellaten.png');
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: contain;
+        background-attachment: scroll;
+        transition:
+            transform .45s ease,
+            filter .45s ease;
+    }
+
+    .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(
+                90deg,
+                rgba(0, 0, 0, .08) 0%,
+                transparent 24%,
+                transparent 76%,
+                rgba(0, 0, 0, .08) 100%
+            );
+    }
+
+    .hero-click {
+        z-index: 2;
+    }
+}
+
+@media (min-width: 901px) and (hover: hover) {
+    .hero:hover {
+        transform: translateY(-2px);
+        filter: saturate(1.04) contrast(1.01);
+    }
+}
+
+/* Garante que não haja corte em telas largas. */
+@media (min-width: 1200px) {
+    .hero {
+        background-size: contain;
+        background-position: center center;
+    }
+}
+
+/* Mobile continua estável, sem corte. */
+@media (max-width: 900px) {
+    .hero {
+        background-position: center center !important;
+        background-size: contain !important;
+        background-attachment: scroll !important;
+        transform: none !important;
+        filter: none !important;
+    }
+}
+
+/* Respeita usuários com preferência por menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+    .hero {
+        transition: none !important;
+        transform: none !important;
     }
 }

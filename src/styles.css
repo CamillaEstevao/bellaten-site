@@ -1214,7 +1214,7 @@ th {
     min-height: 0;
     height: auto;
     aspect-ratio: 2036/574;
-    background: #050505 url('./assets/hero-bellaten.jpg') center/cover no-repeat
+    background: #050505 url('./assets/hero-bellaten.png') center/cover no-repeat
 }
 
 .hero:after,

@@ -2143,3 +2143,120 @@ textarea {
         font-size: 14px;
     }
 }
+
+/* ===== AJUSTE DO BANNER DESKTOP ===== */
+
+/*
+  Mantém o banner desktop mais nítido, evitando esticar demais a arte.
+  Continue usando o arquivo:
+  src/assets/hero-bellaten.jpg
+
+  Se você tiver uma versão em PNG ou em resolução maior, pode trocar
+  o nome do arquivo abaixo sem alterar o restante do CSS.
+*/
+
+.hero {
+    min-height: 0;
+    height: auto;
+    aspect-ratio: 2048 / 567;
+    background-color: #050505;
+    background-image: url('./assets/hero-bellaten.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+}
+
+/* Garante que o banner desktop não seja esticado em telas maiores. */
+@media (min-width: 901px) {
+    .hero {
+        width: 100%;
+        aspect-ratio: 2048 / 567;
+        background-color: #050505;
+        background-image: url('./assets/hero-bellaten.jpg');
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: contain;
+    }
+}
+
+/* ===== CORREÇÃO DO FECHAMENTO DO CARRINHO MOBILE ===== */
+
+.cart-drawer {
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-drawer .drawer-title {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 58px;
+    margin: -22px -22px 22px;
+    padding: 14px 16px 12px 22px;
+    background: rgba(17, 17, 17, .98);
+    border-bottom: 1px solid #2e2327;
+    backdrop-filter: blur(12px);
+}
+
+.cart-drawer .drawer-title h2 {
+    margin: 0;
+    padding-right: 54px;
+    font-family: var(--font-title);
+    font-size: 28px;
+    color: #f7d9e3;
+}
+
+.cart-drawer .drawer-title button {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    color: #fff;
+    background: #24191d;
+    border: 1px solid #4b3039;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.cart-drawer .drawer-title button:hover,
+.cart-drawer .drawer-title button:active {
+    color: #fff;
+    background: #c64f76;
+    border-color: #e987a7;
+}
+
+.cart-drawer .drawer-title button svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 2.2;
+}
+
+@media (max-width: 600px) {
+    .cart-drawer {
+        width: 100%;
+        padding: 18px;
+    }
+
+    .cart-drawer .drawer-title {
+        min-height: 64px;
+        margin: -18px -18px 20px;
+        padding: 14px 68px 12px 18px;
+    }
+
+    .cart-drawer .drawer-title h2 {
+        padding-right: 0;
+        font-size: 26px;
+    }
+
+    .cart-drawer .drawer-title button {
+        right: 14px;
+        width: 44px;
+        height: 44px;
+    }
+}

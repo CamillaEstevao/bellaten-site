@@ -2344,3 +2344,192 @@ textarea {
         background-size: cover;
     }
 }
+
+/* ===== CORREÇÃO FINAL DO CARRINHO MOBILE ===== */
+
+/* O carrinho precisa ficar acima do cabeçalho mobile. */
+.drawer-backdrop {
+    z-index: 2998 !important;
+}
+
+.cart-drawer {
+    z-index: 2999 !important;
+}
+
+@media (max-width: 600px) {
+    .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 2998 !important;
+        background: rgba(0, 0, 0, .76);
+    }
+
+    .cart-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 2999 !important;
+
+        width: 100vw;
+        max-width: none;
+        height: 100dvh;
+        min-height: 100vh;
+
+        display: flex;
+        flex-direction: column;
+
+        padding: 0 16px 22px;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        background: #0d0d0d;
+        box-sizing: border-box;
+        overscroll-behavior: contain;
+    }
+
+    /* Cabeçalho sempre visível, sem ficar atrás do menu do site. */
+    .cart-drawer .drawer-title {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+
+        flex: 0 0 auto;
+        width: calc(100% + 32px);
+        min-height: 72px;
+        margin: 0 -16px 18px;
+        padding: 14px 72px 12px 18px;
+
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+
+        background: rgba(10, 10, 10, .98);
+        border-bottom: 1px solid #34252b;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, .32);
+        backdrop-filter: blur(14px);
+    }
+
+    .cart-drawer .drawer-title h2 {
+        display: block;
+        max-width: 100%;
+        margin: 0;
+
+        font-family: var(--font-title);
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 1.1;
+        color: #f6c7d5;
+
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .cart-drawer .drawer-title button {
+        position: absolute;
+        top: 50%;
+        right: 16px;
+        transform: translateY(-50%);
+
+        display: grid !important;
+        place-items: center;
+
+        width: 44px;
+        height: 44px;
+        padding: 0;
+
+        color: #fff;
+        background: #2b1c22;
+        border: 1px solid #724255;
+        border-radius: 50%;
+
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        cursor: pointer;
+    }
+
+    .cart-drawer .drawer-title button svg {
+        display: block;
+        width: 23px;
+        height: 23px;
+        stroke-width: 2.3;
+    }
+
+    .cart-list {
+        width: 100%;
+        gap: 14px;
+    }
+
+    .cart-item {
+        width: 100%;
+        min-width: 0;
+
+        display: grid;
+        grid-template-columns: 86px minmax(0, 1fr);
+        align-items: center;
+        gap: 12px;
+
+        padding: 11px;
+        border-radius: 14px;
+        box-sizing: border-box;
+    }
+
+    .cart-item img {
+        width: 86px;
+        height: 86px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .cart-item > div {
+        min-width: 0;
+        width: 100%;
+        overflow: visible;
+    }
+
+    .cart-item strong {
+        display: block;
+        width: 100%;
+
+        font-size: 15px;
+        line-height: 1.25;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .cart-item span {
+        display: block;
+        margin-top: 3px;
+        font-size: 15px;
+    }
+
+    .qty {
+        flex-wrap: wrap;
+        margin-top: 7px;
+    }
+
+    .cart-total {
+        width: 100%;
+        padding: 22px 2px 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+
+        font-size: 19px;
+    }
+
+    .cart-total span,
+    .cart-total strong {
+        white-space: nowrap;
+    }
+
+    .cart-drawer > .primary-btn.full {
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 48px;
+        margin-bottom: max(6px, env(safe-area-inset-bottom));
+    }
+}

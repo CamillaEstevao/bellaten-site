@@ -1321,7 +1321,7 @@ th {
 
     .hero {
         aspect-ratio: 984/488;
-        background-image: url('./assets/hero-bellaten-mobile.png');
+        background-image: url('./assets/hero-bellaten-mobile.jpg');
         background-position: center
     }
 
@@ -1956,7 +1956,7 @@ textarea {
         width: 100%;
         min-height: 0 !important;
         aspect-ratio: 984 / 488;
-        background-image: url('./assets/hero-bellaten-mobile.png');
+        background-image: url('./assets/hero-bellaten-mobile.jpg');
         background-repeat: no-repeat;
         background-position: center center;
         background-size: cover;
@@ -2015,5 +2015,131 @@ textarea {
 
     .categories-grid::-webkit-scrollbar {
         display: none;
+    }
+}
+
+/* ===== AJUSTE FINAL DO BANNER MOBILE ===== */
+
+/*
+  Use no projeto a imagem mobile com este nome:
+  src/assets/hero-bellaten-mobile.png
+
+  A arte tem proporção 3:2. No celular ela será exibida inteira,
+  sem esticar e sem cortar a logo ou os cosméticos.
+*/
+
+@media (max-width: 900px) {
+    .hero {
+        width: 100%;
+        min-height: 0 !important;
+        height: auto;
+        aspect-ratio: 3 / 2;
+        background-color: #050505;
+        background-image: url('./assets/hero-bellaten-mobile.png');
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: contain;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero,
+    .hero-content {
+        min-height: 0 !important;
+    }
+
+    .hero {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 3 / 2;
+        background-color: #050505;
+        background-image: url('./assets/hero-bellaten-mobile.png');
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: contain;
+    }
+}
+
+/* Celulares muito estreitos */
+@media (max-width: 390px) {
+    .hero {
+        aspect-ratio: 3 / 2;
+        background-size: contain;
+        background-position: center;
+    }
+}
+
+/* ===== AJUSTE DA BUSCA MOBILE ===== */
+
+.mobile-search {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .mobile-search.mobile-only {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 52px;
+        margin: 0 0 22px;
+        padding: 0 14px;
+        background: linear-gradient(180deg, #171214 0%, #110d0f 100%);
+        border: 1px solid #3a272f;
+        border-radius: 16px;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, .28);
+    }
+
+    .mobile-search svg {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+        color: #ee9fba;
+    }
+
+    .mobile-search input {
+        width: 100%;
+        height: 50px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        outline: none;
+        box-shadow: none;
+        color: #f8f4f5;
+        font-family: var(--font-body);
+        font-size: 15px;
+        font-weight: 500;
+    }
+
+    .mobile-search input::placeholder {
+        color: #a89aa0;
+        opacity: 1;
+    }
+
+    .mobile-search input::-webkit-search-decoration,
+    .mobile-search input::-webkit-search-cancel-button,
+    .mobile-search input::-webkit-search-results-button,
+    .mobile-search input::-webkit-search-results-decoration {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .mobile-search.mobile-only {
+        min-height: 48px;
+        margin: 0 0 18px;
+        padding: 0 12px;
+        border-radius: 14px;
+    }
+
+    .mobile-search svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .mobile-search input {
+        height: 46px;
+        font-size: 14px;
     }
 }

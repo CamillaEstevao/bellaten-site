@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Routes, Route, Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, NavLink, useNavigate, useLocation, useParams } from 'react-router-dom'
 import {
   Search, ShoppingCart, User, Menu, X, Truck, ShieldCheck, CircleDollarSign, LockKeyhole,
   Plus, Pencil, Trash2, Package, LayoutDashboard, Tags, LogOut, Minus, MessageCircle,
   Sparkles, Gift, Heart, Upload, LoaderCircle, ImagePlus, ClipboardList, Users, ChevronRight,
   MapPin, Store, CheckCircle2, Clock3, Ban, Eye, Phone, Mail, TrendingUp,
-  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard, FileSpreadsheet, Download, CalendarDays, TicketPercent, Power
+  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard, FileSpreadsheet, Download, CalendarDays, TicketPercent, Power, Copy, ExternalLink, RefreshCw
 } from 'lucide-react'
 import logo from './assets/logo-bellaten-cropped.png'
 import { categories as fallbackCategories } from './data'
@@ -60,6 +60,43 @@ const ORDER_STATUS_OPTIONS = [
   ['finalizado', 'Finalizado'],
   ['cancelado', 'Cancelado']
 ]
+
+const TRACKING_STEPS = [
+  {
+    value: 'recebido',
+    label: 'Pedido recebido',
+    description: 'A loja recebeu seu pedido e vai iniciar a preparação.',
+    icon: ClipboardList
+  },
+  {
+    value: 'separacao',
+    label: 'Em separação',
+    description: 'Os produtos do pedido estão sendo separados.',
+    icon: Package
+  },
+  {
+    value: 'entrega',
+    label: 'Saiu para entrega',
+    description: 'Seu pedido está a caminho.',
+    icon: Truck
+  },
+  {
+    value: 'finalizado',
+    label: 'Pedido finalizado',
+    description: 'Pedido entregue ou retirado com sucesso.',
+    icon: CheckCircle2
+  }
+]
+
+const normalizeOrderStatus = status =>
+  status === 'novo'
+    ? 'recebido'
+    : status === 'atendimento'
+      ? 'separacao'
+      : status
+
+const trackingUrl = token =>
+  token ? `${window.location.origin}/#/pedido/${token}` : ''
 
 const PAGE_SIZE = 8
 
@@ -176,9 +213,187 @@ function useStore() {
 function App() {
   const store = useStore()
   return <Routes>
-    <Route path="/*" element={<Storefront {...store} />} />
+    <Route path="/pedido/:trackingToken" element={<OrderTracking settings={store.settings} />} />
     <Route path="/admin/*" element={<Admin {...store} />} />
+    <Route path="/*" element={<Storefront {...store} />} />
   </Routes>
+}
+
+
+function OrderTracking({ settings }) {
+  const { trackingToken } = useParams()
+  const [order, setOrder] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const loadTracking = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const { data, error: trackingError } = await supabase.rpc(
+        'get_order_tracking',
+        { tracking_token_input: trackingToken }
+      )
+
+      if (trackingError) throw trackingError
+      if (!data) throw new Error('Pedido não encontrado.')
+
+      setOrder(data)
+    } catch (trackingError) {
+      setError(
+        trackingError.message ||
+        'Não foi possível localizar este pedido.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadTracking()
+  }, [trackingToken])
+
+  const currentStatus = normalizeOrderStatus(order?.status)
+  const currentIndex = TRACKING_STEPS.findIndex(
+    step => step.value === currentStatus
+  )
+  const storeName = settings?.store_name || DEFAULT_SETTINGS.store_name
+  const storeLogo = settings?.logo_url || logo
+  const whatsapp = normalizePhone(
+    settings?.whatsapp || DEFAULT_SETTINGS.whatsapp
+  )
+
+  return <main className="tracking-page">
+    <header className="tracking-header">
+      <Link to="/" className="tracking-brand">
+        <img src={storeLogo} alt={storeName} />
+      </Link>
+      <a
+        href={`https://wa.me/${whatsapp}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <MessageCircle /> Falar com a loja
+      </a>
+    </header>
+
+    <section className="tracking-container">
+      {loading && <div className="tracking-state">
+        <LoaderCircle className="spin" />
+        <h1>Consultando pedido...</h1>
+      </div>}
+
+      {!loading && error && <div className="tracking-state error">
+        <Ban />
+        <h1>Pedido não encontrado</h1>
+        <p>{error}</p>
+        <Link to="/" className="primary-btn">Voltar para a loja</Link>
+      </div>}
+
+      {!loading && order && <>
+        <div className="tracking-hero">
+          <div>
+            <span>Acompanhamento</span>
+            <h1>Pedido #{order.order_number}</h1>
+            <p>Olá, {order.customer_name}. Veja abaixo o andamento do seu pedido.</p>
+          </div>
+          <button type="button" onClick={loadTracking}>
+            <RefreshCw /> Atualizar
+          </button>
+        </div>
+
+        {currentStatus === 'cancelado'
+          ? <div className="tracking-cancelled">
+              <Ban />
+              <div>
+                <strong>Pedido cancelado</strong>
+                <p>Entre em contato com a loja para mais informações.</p>
+              </div>
+            </div>
+          : <div className="tracking-timeline">
+              {TRACKING_STEPS.map((step, index) => {
+                const Icon = step.icon
+                const completed = index <= currentIndex
+                const active = index === currentIndex
+
+                return <article
+                  key={step.value}
+                  className={`${completed ? 'completed' : ''} ${active ? 'active' : ''}`}
+                >
+                  <div className="tracking-step-icon">
+                    <Icon />
+                  </div>
+                  <div>
+                    <strong>{step.label}</strong>
+                    <p>{step.description}</p>
+                  </div>
+                </article>
+              })}
+            </div>}
+
+        <div className="tracking-grid">
+          <section className="tracking-card">
+            <h2>Resumo do pedido</h2>
+            <div className="tracking-items">
+              {(order.items || []).map((item, index) => <div key={index}>
+                <img
+                  src={item.image || 'https://placehold.co/70x70?text=Produto'}
+                  alt={item.name}
+                />
+                <span>
+                  <strong>{item.name}</strong>
+                  <small>{item.quantity} × {money(item.price)}</small>
+                </span>
+                <b>{money(Number(item.quantity) * Number(item.price))}</b>
+              </div>)}
+            </div>
+
+            {Number(order.discount || 0) > 0 && <div className="tracking-price-row">
+              <span>Subtotal</span>
+              <strong>{money(order.subtotal)}</strong>
+            </div>}
+
+            {Number(order.discount || 0) > 0 && <div className="tracking-price-row discount">
+              <span>Desconto {order.coupon_code ? `(${order.coupon_code})` : ''}</span>
+              <strong>-{money(order.discount)}</strong>
+            </div>}
+
+            <div className="tracking-total">
+              <span>Total</span>
+              <strong>{money(order.total)}</strong>
+            </div>
+          </section>
+
+          <section className="tracking-card">
+            <h2>Informações</h2>
+            <dl className="tracking-info">
+              <div>
+                <dt>Data do pedido</dt>
+                <dd>{dateTime(order.created_at)}</dd>
+              </div>
+              <div>
+                <dt>Forma de recebimento</dt>
+                <dd>{order.delivery_type === 'entrega' ? 'Entrega' : 'Retirada'}</dd>
+              </div>
+              {order.delivery_type === 'entrega' && <div>
+                <dt>Endereço</dt>
+                <dd>{order.address}</dd>
+              </div>}
+              <div>
+                <dt>Pagamento</dt>
+                <dd className="capitalize">{order.payment_method}</dd>
+              </div>
+              <div>
+                <dt>Última atualização</dt>
+                <dd>{dateTime(order.updated_at || order.created_at)}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      </>}
+    </section>
+  </main>
 }
 
 function Storefront({ products, categories, settings, loading, cart, setCart, favorites, setFavorites, reload }) {
@@ -596,6 +811,12 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
         discount
       )
 
+      const orderTrackingToken =
+        data?.tracking_token ||
+        data?.[0]?.tracking_token ||
+        null
+      const orderTrackingUrl = trackingUrl(orderTrackingToken)
+
       const lines = cart.map(item =>
         `• ${item.name} — ${item.qty}x ${money(item.price)} = ${money(Number(item.price) * item.qty)}`
       )
@@ -613,7 +834,8 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
         `${lines.join('\n')}\n\n` +
         `${finalDiscount > 0 ? `Cupom: ${coupon?.code}\nDesconto: -${money(finalDiscount)}\n` : ''}` +
         `Total: ${money(finalTotal)}` +
-        `${form.notes ? `\nObservações: ${form.notes}` : ''}`
+        `${form.notes ? `\nObservações: ${form.notes}` : ''}` +
+        `${orderTrackingUrl ? `\n\nAcompanhe seu pedido:\n${orderTrackingUrl}` : ''}`
 
       const whatsapp = normalizePhone(settings.whatsapp || DEFAULT_SETTINGS.whatsapp)
 
@@ -2597,6 +2819,36 @@ function OrderDetails({ order, onClose, onStatus }) {
       </div>
 
       <div className="checkout-total"><span>Total</span><strong>{money(order.total)}</strong></div>
+
+      {order.tracking_token && <div className="order-tracking-actions">
+        <button
+          type="button"
+          onClick={async () => {
+            await navigator.clipboard.writeText(trackingUrl(order.tracking_token))
+            alert('Link de acompanhamento copiado.')
+          }}
+        >
+          <Copy /> Copiar link
+        </button>
+
+        <a
+          href={trackingUrl(order.tracking_token)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <ExternalLink /> Abrir acompanhamento
+        </a>
+
+        <a
+          href={`https://wa.me/${normalizePhone(order.phone)}?text=${encodeURIComponent(
+            `Olá, ${order.customer_name}! O status do seu pedido #${order.order_number} é: ${ORDER_STATUS[normalizedStatus]?.label || normalizedStatus}.\n\nAcompanhe aqui:\n${trackingUrl(order.tracking_token)}`
+          )}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <MessageCircle /> Enviar atualização
+        </a>
+      </div>}
 
       {order.notes && <p className="order-notes"><strong>Observações:</strong> {order.notes}</p>}
 

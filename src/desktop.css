@@ -2372,3 +2372,72 @@ button:disabled {
 .order-details {
   max-width: calc(100vw - 28px);
 }
+
+
+/* =========================================================
+   CHECKOUT SEPARADO DO CARRINHO — DESKTOP
+   ========================================================= */
+
+.checkout-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 24px !important;
+  overflow-y: auto !important;
+  background: rgba(0, 0, 0, .82) !important;
+  backdrop-filter: blur(5px);
+}
+
+.checkout-modal {
+  position: relative !important;
+  width: min(680px, 100%) !important;
+  max-height: calc(100vh - 48px) !important;
+  overflow-y: auto !important;
+  padding: 28px !important;
+  background: #151515 !important;
+  border: 1px solid #3a292f !important;
+  border-radius: 20px !important;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .7);
+}
+
+.checkout-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #30262a;
+}
+
+.checkout-header small {
+  color: #d5a7b5;
+}
+
+.checkout-header h2 {
+  margin: 4px 0 0;
+  font-family: var(--font-title);
+  font-size: 34px;
+}
+
+.checkout-close {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #fff;
+  background: #281a20;
+  border: 1px solid #573443;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.checkout-modal textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+}

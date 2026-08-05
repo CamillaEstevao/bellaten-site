@@ -130,30 +130,319 @@ function ProductDetails({ product, favorite, onFavorite, onAdd, onClose }) {
 
 function CartDrawer({ cart, setCart, onClose, updateQty, onOrderCreated }) {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const total = cart.reduce((a, i) => a + Number(i.price) * i.qty, 0)
-  return <div className="drawer-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}><aside className="cart-drawer"><div className="drawer-title"><div><small>Seu pedido</small><h2>Carrinho</h2></div><button onClick={onClose}><X /></button></div><div className="cart-list">{cart.map(item => <article className="cart-item" key={item.id}><img src={item.image || 'https://placehold.co/120x120?text=Produto'} alt="" /><div><strong>{item.name}</strong><span>{money(item.price)} cada</span><div className="qty-control"><button onClick={() => updateQty(item.id, -1)} aria-label="Diminuir quantidade"><Minus /></button><b>{item.qty}</b><button onClick={() => updateQty(item.id, 1)} aria-label="Aumentar quantidade"><Plus /></button></div><small className="cart-subtotal">Subtotal: <b>{money(Number(item.price) * item.qty)}</b></small></div><button className="remove-cart" onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))}><Trash2 /></button></article>)}</div>{!cart.length && <div className="empty cart-empty"><ShoppingCart /><p>Seu carrinho está vazio.</p></div>}<div className="cart-footer"><div><span>Total</span><strong>{money(total)}</strong></div><button className="primary-btn full" disabled={!cart.length} onClick={() => setCheckoutOpen(true)}>Finalizar pedido <ChevronRight /></button></div></aside>{checkoutOpen && <CheckoutModal cart={cart} total={total} onClose={() => setCheckoutOpen(false)} onSuccess={() => { setCart([]); setCheckoutOpen(false); onClose(); onOrderCreated() }} />}</div>
+  const total = cart.reduce((acc, item) => acc + Number(item.price) * item.qty, 0)
+
+  const finishOrder = () => {
+    setCart([])
+    setCheckoutOpen(false)
+    onClose()
+    onOrderCreated()
+  }
+
+  return <>
+    <div
+      className="drawer-backdrop"
+      onMouseDown={event => {
+        if (event.target === event.currentTarget && !checkoutOpen) onClose()
+      }}
+    >
+      <aside
+        className="cart-drawer"
+        onMouseDown={event => event.stopPropagation()}
+      >
+        <div className="drawer-title">
+          <div>
+            <small>Seu pedido</small>
+            <h2>Carrinho</h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar carrinho"
+          >
+            <X />
+          </button>
+        </div>
+
+        <div className="cart-list">
+          {cart.map(item => <article className="cart-item" key={item.id}>
+            <img
+              src={item.image || 'https://placehold.co/120x120?text=Produto'}
+              alt={item.name}
+            />
+
+            <div>
+              <strong>{item.name}</strong>
+              <span>{money(item.price)} cada</span>
+
+              <div className="qty-control">
+                <button
+                  type="button"
+                  onClick={() => updateQty(item.id, -1)}
+                  aria-label="Diminuir quantidade"
+                >
+                  <Minus />
+                </button>
+
+                <b>{item.qty}</b>
+
+                <button
+                  type="button"
+                  onClick={() => updateQty(item.id, 1)}
+                  aria-label="Aumentar quantidade"
+                >
+                  <Plus />
+                </button>
+              </div>
+
+              <small className="cart-subtotal">
+                Subtotal: <b>{money(Number(item.price) * item.qty)}</b>
+              </small>
+            </div>
+
+            <button
+              type="button"
+              className="remove-cart"
+              onClick={() => setCart(previous =>
+                previous.filter(product => product.id !== item.id)
+              )}
+              aria-label={`Remover ${item.name}`}
+            >
+              <Trash2 />
+            </button>
+          </article>)}
+        </div>
+
+        {!cart.length && <div className="empty cart-empty">
+          <ShoppingCart />
+          <p>Seu carrinho está vazio.</p>
+        </div>}
+
+        <div className="cart-footer">
+          <div>
+            <span>Total</span>
+            <strong>{money(total)}</strong>
+          </div>
+
+          <button
+            type="button"
+            className="primary-btn full"
+            disabled={!cart.length}
+            onClick={() => setCheckoutOpen(true)}
+          >
+            Finalizar pedido <ChevronRight />
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    {checkoutOpen && <CheckoutModal
+      cart={cart}
+      total={total}
+      onClose={() => setCheckoutOpen(false)}
+      onSuccess={finishOrder}
+    />}
+  </>
 }
 
 function CheckoutModal({ cart, total, onClose, onSuccess }) {
-  const [form, setForm] = useState({ customer_name: '', phone: '', email: '', delivery_type: 'retirada', address: '', payment_method: 'pix', notes: '' })
+  const [form, setForm] = useState({
+    customer_name: '',
+    phone: '',
+    email: '',
+    delivery_type: 'retirada',
+    address: '',
+    payment_method: 'pix',
+    notes: ''
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
-  const submit = async e => {
-    e.preventDefault(); setSaving(true); setError('')
+
+  const update = (key, value) => setForm(previous => ({
+    ...previous,
+    [key]: value
+  }))
+
+  const submit = async event => {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+
     try {
-      const items = cart.map(i => ({ product_id: i.id, name: i.name, price: Number(i.price), quantity: i.qty, image: i.image || '' }))
-      const { data, error } = await supabase.rpc('create_order', { order_payload: { ...form, items } })
-      if (error) throw error
-      const orderNumber = data?.order_number || data?.[0]?.order_number || 'novo'
-      const lines = cart.map(i => `• ${i.name} — ${i.qty}x ${money(i.price)} = ${money(Number(i.price) * i.qty)}`)
-      const delivery = form.delivery_type === 'entrega' ? `Entrega: ${form.address}` : 'Retirada combinada'
-      const text = `Olá, BellaTen! Acabei de fazer o pedido #${orderNumber}.\n\nCliente: ${form.customer_name}\nTelefone: ${form.phone}\n${delivery}\nPagamento: ${form.payment_method}\n\n${lines.join('\n')}\n\nTotal: ${money(total)}${form.notes ? `\nObservações: ${form.notes}` : ''}`
-      window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank')
+      const items = cart.map(item => ({
+        product_id: item.id,
+        name: item.name,
+        price: Number(item.price),
+        quantity: item.qty,
+        image: item.image || ''
+      }))
+
+      const { data, error: orderError } = await supabase.rpc('create_order', {
+        order_payload: { ...form, items }
+      })
+
+      if (orderError) throw orderError
+
+      const orderNumber =
+        data?.order_number ||
+        data?.[0]?.order_number ||
+        'novo'
+
+      const lines = cart.map(item =>
+        `• ${item.name} — ${item.qty}x ${money(item.price)} = ${money(Number(item.price) * item.qty)}`
+      )
+
+      const delivery = form.delivery_type === 'entrega'
+        ? `Entrega: ${form.address}`
+        : 'Retirada combinada'
+
+      const text =
+        `Olá, BellaTen! Acabei de fazer o pedido #${orderNumber}.\n\n` +
+        `Cliente: ${form.customer_name}\n` +
+        `Telefone: ${form.phone}\n` +
+        `${delivery}\n` +
+        `Pagamento: ${form.payment_method}\n\n` +
+        `${lines.join('\n')}\n\n` +
+        `Total: ${money(total)}` +
+        `${form.notes ? `\nObservações: ${form.notes}` : ''}`
+
+      window.open(
+        `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`,
+        '_blank'
+      )
+
       onSuccess()
-    } catch (err) { setError(err.message || 'Não foi possível finalizar o pedido.') } finally { setSaving(false) }
+    } catch (err) {
+      setError(err.message || 'Não foi possível finalizar o pedido.')
+    } finally {
+      setSaving(false)
+    }
   }
-  return <div className="modal-backdrop checkout-layer"><form className="modal checkout-modal" onSubmit={submit}><div className="drawer-title"><div><small>Última etapa</small><h2>Finalizar pedido</h2></div><button type="button" onClick={onClose}><X /></button></div><div className="form-row"><label>Nome completo<input required value={form.customer_name} onChange={e => update('customer_name', e.target.value)} /></label><label>WhatsApp<input required value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="(11) 99999-9999" /></label></div><label>E-mail (opcional)<input type="email" value={form.email} onChange={e => update('email', e.target.value)} /></label><div className="choice-grid"><button type="button" className={form.delivery_type === 'retirada' ? 'active' : ''} onClick={() => update('delivery_type', 'retirada')}><Store /> Retirada</button><button type="button" className={form.delivery_type === 'entrega' ? 'active' : ''} onClick={() => update('delivery_type', 'entrega')}><Truck /> Entrega</button></div>{form.delivery_type === 'entrega' && <label>Endereço completo<textarea required value={form.address} onChange={e => update('address', e.target.value)} placeholder="Rua, número, bairro e referência" /></label>}<label>Forma de pagamento<select value={form.payment_method} onChange={e => update('payment_method', e.target.value)}><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão na entrega/retirada</option></select></label><label>Observações<textarea value={form.notes} onChange={e => update('notes', e.target.value)} placeholder="Ex.: preciso de troco, horário preferido..." /></label><div className="checkout-total"><span>Total do pedido</span><strong>{money(total)}</strong></div>{error && <p className="form-error">{error}</p>}<button className="primary-btn full" disabled={saving}>{saving ? <><LoaderCircle className="spin" /> Finalizando...</> : <><MessageCircle /> Confirmar no WhatsApp</>}</button></form></div>
+
+  return <div
+    className="modal-backdrop checkout-layer"
+    onMouseDown={event => {
+      if (event.target === event.currentTarget) onClose()
+    }}
+  >
+    <form
+      className="modal checkout-modal"
+      onSubmit={submit}
+      onMouseDown={event => event.stopPropagation()}
+    >
+      <div className="checkout-header">
+        <div>
+          <small>Última etapa</small>
+          <h2>Finalizar pedido</h2>
+        </div>
+
+        <button
+          type="button"
+          className="checkout-close"
+          onClick={onClose}
+          aria-label="Fechar checkout"
+        >
+          <X />
+        </button>
+      </div>
+
+      <div className="form-row">
+        <label>
+          Nome completo
+          <input
+            required
+            value={form.customer_name}
+            onChange={event => update('customer_name', event.target.value)}
+          />
+        </label>
+
+        <label>
+          WhatsApp
+          <input
+            required
+            value={form.phone}
+            onChange={event => update('phone', event.target.value)}
+            placeholder="(11) 99999-9999"
+          />
+        </label>
+      </div>
+
+      <label>
+        E-mail (opcional)
+        <input
+          type="email"
+          value={form.email}
+          onChange={event => update('email', event.target.value)}
+        />
+      </label>
+
+      <div className="choice-grid">
+        <button
+          type="button"
+          className={form.delivery_type === 'retirada' ? 'active' : ''}
+          onClick={() => update('delivery_type', 'retirada')}
+        >
+          <Store /> Retirada
+        </button>
+
+        <button
+          type="button"
+          className={form.delivery_type === 'entrega' ? 'active' : ''}
+          onClick={() => update('delivery_type', 'entrega')}
+        >
+          <Truck /> Entrega
+        </button>
+      </div>
+
+      {form.delivery_type === 'entrega' && <label>
+        Endereço completo
+        <textarea
+          required
+          value={form.address}
+          onChange={event => update('address', event.target.value)}
+          placeholder="Rua, número, bairro e referência"
+        />
+      </label>}
+
+      <label>
+        Forma de pagamento
+        <select
+          value={form.payment_method}
+          onChange={event => update('payment_method', event.target.value)}
+        >
+          <option value="pix">Pix</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão na entrega/retirada</option>
+        </select>
+      </label>
+
+      <label>
+        Observações
+        <textarea
+          value={form.notes}
+          onChange={event => update('notes', event.target.value)}
+          placeholder="Ex.: preciso de troco, horário preferido..."
+        />
+      </label>
+
+      <div className="checkout-total">
+        <span>Total do pedido</span>
+        <strong>{money(total)}</strong>
+      </div>
+
+      {error && <p className="form-error">{error}</p>}
+
+      <button
+        className="primary-btn full"
+        disabled={saving}
+      >
+        {saving
+          ? <><LoaderCircle className="spin" /> Finalizando...</>
+          : <><MessageCircle /> Confirmar no WhatsApp</>}
+      </button>
+    </form>
+  </div>
 }
 
 function Admin({ products, categories, reload }) {

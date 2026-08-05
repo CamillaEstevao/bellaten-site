@@ -4150,3 +4150,138 @@ button:disabled {
     height: 310px !important;
   }
 }
+
+* =========================================================
+   BELLATEN — CATEGORIAS MOBILE CORRIGIDAS
+   Cole este bloco NO FINAL de src/styles.css
+   ========================================================= */
+
+@media (max-width: 600px) {
+  #categorias {
+    overflow: hidden;
+  }
+
+  #categorias .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+  }
+
+  #categorias .section-heading {
+    padding: 0 20px;
+    margin-bottom: 28px;
+  }
+
+  .categories-grid {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 18px 16px !important;
+    gap: 18px !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 18px;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .categories-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category {
+    flex: 0 0 104px !important;
+    width: 104px !important;
+    min-width: 104px !important;
+    max-width: 104px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    gap: 10px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    scroll-snap-align: start;
+  }
+
+  .category img,
+  .category-more {
+    display: block !important;
+    flex: 0 0 88px !important;
+
+    width: 88px !important;
+    min-width: 88px !important;
+    max-width: 88px !important;
+    height: 88px !important;
+    min-height: 88px !important;
+    max-height: 88px !important;
+
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    overflow: hidden !important;
+  }
+
+  .category-more {
+    display: grid !important;
+    place-items: center !important;
+  }
+
+  .category strong {
+    display: -webkit-box !important;
+    width: 100% !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 2px !important;
+
+    font-size: 13px !important;
+    line-height: 1.25 !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    white-space: normal !important;
+
+    overflow: hidden !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
+@media (max-width: 390px) {
+  .categories-grid {
+    padding-inline: 14px !important;
+    gap: 14px !important;
+  }
+
+  .category {
+    flex-basis: 96px !important;
+    width: 96px !important;
+    min-width: 96px !important;
+    max-width: 96px !important;
+  }
+
+  .category img,
+  .category-more {
+    flex-basis: 82px !important;
+    width: 82px !important;
+    min-width: 82px !important;
+    max-width: 82px !important;
+    height: 82px !important;
+    min-height: 82px !important;
+    max-height: 82px !important;
+  }
+
+  .category strong {
+    font-size: 12px !important;
+  }
+}

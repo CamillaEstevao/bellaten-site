@@ -74,15 +74,86 @@ function useStore() {
 
   const loadData = async () => {
     setLoading(true)
-    const [productsResult, categoriesResult, settingsResult] = await Promise.all([
-      supabase.from('products').select('*').order('created_at', { ascending: false }),
-      supabase.from('categories').select('*').order('display_order', { ascending: true }),
-      supabase.from('store_settings').select('*').eq('id', 1).maybeSingle()
-    ])
-    setProducts(productsResult.data || [])
-    setCategories(categoriesResult.data || fallbackCategories.map(([name, image], index) => ({ id: `fallback-${index}`, name, image, active: true, display_order: index + 1 })))
-    setSettings({ ...DEFAULT_SETTINGS, ...(settingsResult.data || {}) })
-    setLoading(false)
+
+    try {
+      // Produtos e categorias são os dados essenciais da loja.
+      // Eles não podem ficar esperando a consulta opcional de configurações.
+      const [productsResult, categoriesResult] = await Promise.all([
+        supabase
+          .from('products')
+          .select('*')
+          .order('id', { ascending: false }),
+
+        supabase
+          .from('categories')
+          .select('*')
+          .order('display_order', { ascending: true })
+      ])
+
+      if (productsResult.error) {
+        console.error('Erro ao carregar produtos:', productsResult.error)
+      }
+
+      if (categoriesResult.error) {
+        console.error('Erro ao carregar categorias:', categoriesResult.error)
+      }
+
+      setProducts(productsResult.data || [])
+      setCategories(
+        categoriesResult.data?.length
+          ? categoriesResult.data
+          : fallbackCategories.map(([name, image], index) => ({
+              id: `fallback-${index}`,
+              name,
+              image,
+              active: true,
+              display_order: index + 1
+            }))
+      )
+
+      // Configurações são opcionais. Caso a tabela ainda não exista,
+      // a loja continua funcionando com os valores padrão.
+      try {
+        const settingsResult = await supabase
+          .from('store_settings')
+          .select('*')
+          .eq('id', 1)
+          .maybeSingle()
+
+        if (settingsResult.error) {
+          console.warn(
+            'Configurações da loja não carregadas. Usando valores padrão:',
+            settingsResult.error
+          )
+          setSettings(DEFAULT_SETTINGS)
+        } else {
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...(settingsResult.data || {})
+          })
+        }
+      } catch (settingsError) {
+        console.warn(
+          'Falha ao consultar configurações. Usando valores padrão:',
+          settingsError
+        )
+        setSettings(DEFAULT_SETTINGS)
+      }
+    } catch (loadError) {
+      console.error('Falha ao carregar os dados da loja:', loadError)
+      setProducts([])
+      setCategories(
+        fallbackCategories.map(([name, image], index) => ({
+          id: `fallback-${index}`,
+          name,
+          image,
+          active: true,
+          display_order: index + 1
+        }))
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { loadData() }, [])

@@ -5,14 +5,40 @@ import {
   Plus, Pencil, Trash2, Package, LayoutDashboard, Tags, LogOut, Minus, MessageCircle,
   Sparkles, Gift, Heart, Upload, LoaderCircle, ImagePlus, ClipboardList, Users, ChevronRight,
   MapPin, Store, CheckCircle2, Clock3, Ban, Eye, Phone, Mail, TrendingUp,
-  AlertTriangle, ArrowUpDown
+  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard
 } from 'lucide-react'
 import logo from './assets/logo-bellaten-cropped.png'
 import { categories as fallbackCategories } from './data'
 import { supabase } from './supabase'
 
-const WHATSAPP = '5511940746340'
-const INSTAGRAM = 'https://instagram.com/bellaten.oficial'
+const DEFAULT_SETTINGS = {
+  id: 1,
+  store_name: 'BellaTen',
+  whatsapp: '5511940746340',
+  instagram: 'https://instagram.com/bellaten.oficial',
+  facebook: '',
+  address: '',
+  pix_key: '',
+  business_hours: '',
+  footer_text: 'Seu novo jeito de comprar beleza.',
+  seo_title: 'BellaTen | Beleza e cosméticos',
+  seo_description: 'Produtos de beleza escolhidos com carinho para você.',
+  logo_url: '',
+  banner_desktop_url: '',
+  banner_mobile_url: '',
+  primary_color: '#e36b91',
+  secondary_color: '#d9a55f',
+  delivery_enabled: true,
+  pickup_enabled: true
+}
+
+const normalizePhone = value => String(value || '').replace(/\D/g, '')
+const normalizeInstagram = value => {
+  const text = String(value || '').trim()
+  if (!text) return ''
+  if (text.startsWith('http://') || text.startsWith('https://')) return text
+  return `https://instagram.com/${text.replace(/^@/, '')}`
+}
 const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0))
 const dateTime = value => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
 const ORDER_STATUS = {
@@ -41,25 +67,39 @@ const PAGE_SIZE = 8
 function useStore() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('bellaten_cart') || '[]'))
   const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('bellaten_favorites') || '[]'))
 
   const loadData = async () => {
     setLoading(true)
-    const [productsResult, categoriesResult] = await Promise.all([
+    const [productsResult, categoriesResult, settingsResult] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
-      supabase.from('categories').select('*').order('display_order', { ascending: true })
+      supabase.from('categories').select('*').order('display_order', { ascending: true }),
+      supabase.from('store_settings').select('*').eq('id', 1).maybeSingle()
     ])
     setProducts(productsResult.data || [])
     setCategories(categoriesResult.data || fallbackCategories.map(([name, image], index) => ({ id: `fallback-${index}`, name, image, active: true, display_order: index + 1 })))
+    setSettings({ ...DEFAULT_SETTINGS, ...(settingsResult.data || {}) })
     setLoading(false)
   }
 
   useEffect(() => { loadData() }, [])
   useEffect(() => localStorage.setItem('bellaten_cart', JSON.stringify(cart)), [cart])
   useEffect(() => localStorage.setItem('bellaten_favorites', JSON.stringify(favorites)), [favorites])
-  return { products, categories, loading, reload: loadData, cart, setCart, favorites, setFavorites }
+  return {
+    products,
+    categories,
+    settings,
+    setSettings,
+    loading,
+    reload: loadData,
+    cart,
+    setCart,
+    favorites,
+    setFavorites
+  }
 }
 
 function App() {
@@ -70,7 +110,7 @@ function App() {
   </Routes>
 }
 
-function Storefront({ products, categories, loading, cart, setCart, favorites, setFavorites, reload }) {
+function Storefront({ products, categories, settings, loading, cart, setCart, favorites, setFavorites, reload }) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Todos')
   const [sort, setSort] = useState('recentes')
@@ -122,11 +162,39 @@ function Storefront({ products, categories, loading, cart, setCart, favorites, s
     })
   }
 
-  return <div className="site-shell">
+  const storeName = settings.store_name || DEFAULT_SETTINGS.store_name
+  const storeLogo = settings.logo_url || logo
+  const whatsapp = normalizePhone(settings.whatsapp || DEFAULT_SETTINGS.whatsapp)
+  const instagram = normalizeInstagram(settings.instagram || DEFAULT_SETTINGS.instagram)
+
+  const storefrontStyle = {
+    '--pink': settings.primary_color || DEFAULT_SETTINGS.primary_color,
+    '--pink2': settings.primary_color || DEFAULT_SETTINGS.primary_color,
+    '--gold': settings.secondary_color || DEFAULT_SETTINGS.secondary_color,
+    '--hero-desktop': settings.banner_desktop_url
+      ? `url("${settings.banner_desktop_url}")`
+      : undefined,
+    '--hero-mobile': settings.banner_mobile_url
+      ? `url("${settings.banner_mobile_url}")`
+      : undefined
+  }
+
+  useEffect(() => {
+    document.title = settings.seo_title || storeName
+    const description = document.querySelector('meta[name="description"]')
+    if (description) {
+      description.setAttribute(
+        'content',
+        settings.seo_description || DEFAULT_SETTINGS.seo_description
+      )
+    }
+  }, [settings.seo_title, settings.seo_description, storeName])
+
+  return <div className="site-shell" style={storefrontStyle}>
     <header className="header">
       <div className="topbar container">
         <button className="icon-btn mobile-only" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menu">{menuOpen ? <X /> : <Menu />}</button>
-        <Link to="/" className="brand"><img src={logo} alt="BellaTen" /></Link>
+        <Link to="/" className="brand"><img src={storeLogo} alt={storeName} /></Link>
         <div className="search-box desktop-search"><Search size={18} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar produtos..." /></div>
         <div className="header-actions">
           <button
@@ -148,7 +216,10 @@ function Storefront({ products, categories, loading, cart, setCart, favorites, s
     </header>
 
     <main>
-      <section className="hero" id="inicio"><a className="hero-click" href="#produtos" aria-label="Ver produtos"></a></section>
+      <section
+        className={`hero ${settings.banner_desktop_url || settings.banner_mobile_url ? 'custom-hero' : ''}`}
+        id="inicio"
+      ><a className="hero-click" href="#produtos" aria-label="Ver produtos"></a></section>
       <section className="benefits"><div className="container benefits-grid"><Benefit icon={<CircleDollarSign />} title="Preços acessíveis" text="Produtos para todos os bolsos" /><Benefit icon={<ShieldCheck />} title="Qualidade garantida" text="Produtos escolhidos com carinho" /><Benefit icon={<Truck />} title="Entrega rápida" text="Combine diretamente pelo WhatsApp" /><Benefit icon={<LockKeyhole />} title="Compra segura" text="Pedido confirmado com a vendedora" /></div></section>
       {!favoritesOnly && <section className="section container" id="categorias"><div className="section-heading"><span>Explore</span><h2>Categorias</h2><p>Encontre tudo o que você precisa</p></div><div className="categories-grid">{categories.filter(c => c.active !== false).map(c => <button key={c.id || c.name} className={category === c.name ? 'category active' : 'category'} onClick={() => { setCategory(c.name); setFavoritesOnly(false); document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' }) }}><img src={c.image || 'https://placehold.co/500x500?text=Categoria'} alt={c.name} /><strong>{c.name}</strong></button>)}<button className="category" onClick={() => { setCategory('Todos'); setFavoritesOnly(false) }}><span className="category-more">•••</span><strong>Todos</strong></button></div></section>}
 
@@ -177,8 +248,47 @@ function Storefront({ products, categories, loading, cart, setCart, favorites, s
       </div></section>
       <section className="brand-section" id="sobre"><div className="container brand-panel"><div className="brand-copy"><span className="eyebrow">O universo BellaTen</span><h2>Beleza que combina com você</h2><p>Produtos escolhidos para deixar sua rotina mais bonita, prática e acessível.</p><a className="primary-btn" href="#produtos">Ver produtos</a></div><div className="brand-highlights"><div><Sparkles /><strong>Novidades</strong><span>Achadinhos para renovar sua nécessaire.</span></div><div><Gift /><strong>Para presentear</strong><span>Monte kits lindos e especiais.</span></div><div><Heart /><strong>Com carinho</strong><span>Produtos para todos os estilos.</span></div></div></div></section>
     </main>
-    <footer id="contato" className="premium-footer"><div className="container footer-main"><div className="footer-brand"><img src={logo} alt="BellaTen" /><p>Seu novo jeito de comprar beleza.</p></div><div className="footer-links"><strong>Navegação</strong><a href="#inicio">Início</a><a href="#categorias">Categorias</a><a href="#produtos">Produtos</a></div><div className="footer-contact"><strong>Fale com a BellaTen</strong><a href={INSTAGRAM} target="_blank" rel="noreferrer"><span className="social-mark">◎</span> @bellaten.oficial</a><a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a></div></div><div className="container footer-bottom"><span>© 2026 BellaTen.</span><span>Desenvolvido por NexCode Studio.</span></div></footer>
-    {cartOpen && <CartDrawer cart={cart} setCart={setCart} onClose={() => setCartOpen(false)} updateQty={updateQty} onOrderCreated={reload} />}
+    <footer id="contato" className="premium-footer">
+      <div className="container footer-main">
+        <div className="footer-brand">
+          <img src={storeLogo} alt={storeName} />
+          <p>{settings.footer_text || DEFAULT_SETTINGS.footer_text}</p>
+        </div>
+
+        <div className="footer-links">
+          <strong>Navegação</strong>
+          <a href="#inicio">Início</a>
+          <a href="#categorias">Categorias</a>
+          <a href="#produtos">Produtos</a>
+        </div>
+
+        <div className="footer-contact">
+          <strong>Fale com a {storeName}</strong>
+          {instagram && <a href={instagram} target="_blank" rel="noreferrer">
+            <span className="social-mark">◎</span>
+            {String(settings.instagram || '@bellaten.oficial').replace('https://instagram.com/', '@').replace('https://www.instagram.com/', '@')}
+          </a>}
+          {whatsapp && <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer">
+            <MessageCircle /> WhatsApp
+          </a>}
+          {settings.address && <span className="footer-address"><MapPin /> {settings.address}</span>}
+          {settings.business_hours && <span className="footer-address"><Clock3 /> {settings.business_hours}</span>}
+        </div>
+      </div>
+
+      <div className="container footer-bottom">
+        <span>© 2026 {storeName}.</span>
+        <span>Desenvolvido por NexCode Studio.</span>
+      </div>
+    </footer>
+    {cartOpen && <CartDrawer
+      cart={cart}
+      setCart={setCart}
+      settings={settings}
+      onClose={() => setCartOpen(false)}
+      updateQty={updateQty}
+      onOrderCreated={reload}
+    />}
     {selectedProduct && <ProductDetails product={selectedProduct} favorite={favorites.includes(selectedProduct.id)} onFavorite={() => toggleFavorite(selectedProduct.id)} onAdd={() => { addToCart(selectedProduct); setSelectedProduct(null); setCartOpen(true) }} onClose={() => setSelectedProduct(null)} />}
   </div>
 }
@@ -192,7 +302,7 @@ function ProductDetails({ product, favorite, onFavorite, onAdd, onClose }) {
   return <div className="modal-backdrop"><div className="product-details-modal"><button className="modal-close" onClick={onClose}><X /></button><div className="product-details-image"><img src={product.image || 'https://placehold.co/700x700?text=Produto'} alt={product.name} /></div><div className="product-details-copy"><small>{product.category}</small><h2>{product.name}</h2><strong className="detail-price">{money(product.price)}</strong><p>{product.description || 'Produto selecionado com carinho pela BellaTen para completar sua rotina de beleza.'}</p><span className={product.stock > 0 ? 'stock-ok' : 'stock-off'}>{product.stock > 0 ? `${product.stock} unidade(s) disponível(is)` : 'Produto indisponível'}</span><div className="detail-actions"><button className={`secondary-btn ${favorite ? 'active' : ''}`} onClick={onFavorite}><Heart fill={favorite ? 'currentColor' : 'none'} /> {favorite ? 'Favoritado' : 'Favoritar'}</button><button className="primary-btn" disabled={product.stock <= 0} onClick={onAdd}><ShoppingCart /> Adicionar</button></div></div></div></div>
 }
 
-function CartDrawer({ cart, setCart, onClose, updateQty, onOrderCreated }) {
+function CartDrawer({ cart, setCart, settings, onClose, updateQty, onOrderCreated }) {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const total = cart.reduce((acc, item) => acc + Number(item.price) * item.qty, 0)
 
@@ -305,12 +415,13 @@ function CartDrawer({ cart, setCart, onClose, updateQty, onOrderCreated }) {
       cart={cart}
       total={total}
       onClose={() => setCheckoutOpen(false)}
+      settings={settings}
       onSuccess={finishOrder}
     />}
   </>
 }
 
-function CheckoutModal({ cart, total, onClose, onSuccess }) {
+function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
   const [form, setForm] = useState({
     customer_name: '',
     phone: '',
@@ -371,8 +482,10 @@ function CheckoutModal({ cart, total, onClose, onSuccess }) {
         `Total: ${money(total)}` +
         `${form.notes ? `\nObservações: ${form.notes}` : ''}`
 
+      const whatsapp = normalizePhone(settings.whatsapp || DEFAULT_SETTINGS.whatsapp)
+
       window.open(
-        `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`,
+        `https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`,
         '_blank'
       )
 
@@ -442,21 +555,21 @@ function CheckoutModal({ cart, total, onClose, onSuccess }) {
       </label>
 
       <div className="choice-grid">
-        <button
+        {settings.pickup_enabled !== false && <button
           type="button"
           className={form.delivery_type === 'retirada' ? 'active' : ''}
           onClick={() => update('delivery_type', 'retirada')}
         >
           <Store /> Retirada
-        </button>
+        </button>}
 
-        <button
+        {settings.delivery_enabled !== false && <button
           type="button"
           className={form.delivery_type === 'entrega' ? 'active' : ''}
           onClick={() => update('delivery_type', 'entrega')}
         >
           <Truck /> Entrega
-        </button>
+        </button>}
       </div>
 
       {form.delivery_type === 'entrega' && <label>
@@ -509,12 +622,12 @@ function CheckoutModal({ cart, total, onClose, onSuccess }) {
   </div>
 }
 
-function Admin({ products, categories, reload }) {
+function Admin({ products, categories, settings, setSettings, reload }) {
   const [session, setSession] = useState(undefined)
   useEffect(() => { supabase.auth.getSession().then(({ data }) => setSession(data.session)); const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s)); return () => subscription.unsubscribe() }, [])
   if (session === undefined) return <div className="auth-page"><LoaderCircle className="spin" /></div>
   if (!session) return <Login />
-  return <AdminPanel products={products} categories={categories} reload={reload} />
+  return <AdminPanel products={products} categories={categories} settings={settings} setSettings={setSettings} reload={reload} />
 }
 
 function Login() {
@@ -523,7 +636,7 @@ function Login() {
   return <div className="auth-page"><form className="login-card" onSubmit={submit}><img src={logo} /><span>Painel administrativo</span><h1>Bem-vinda</h1><p>Entre para gerenciar a loja BellaTen.</p><label>E-mail<input required type="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Senha<input required type="password" value={password} onChange={e => setPassword(e.target.value)} /></label>{error && <p className="form-error">{error}</p>}<button className="primary-btn full" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button><Link to="/">Voltar para a loja</Link></form></div>
 }
 
-function AdminPanel({ products, categories, reload }) {
+function AdminPanel({ products, categories, settings, setSettings, reload }) {
   const [modal, setModal] = useState(false), [editing, setEditing] = useState(null)
   const [categoryModal, setCategoryModal] = useState(false), [editingCategory, setEditingCategory] = useState(null)
   const [query, setQuery] = useState('')
@@ -543,7 +656,18 @@ function AdminPanel({ products, categories, reload }) {
   const [customerQuery, setCustomerQuery] = useState('')
   const [customerPage, setCustomerPage] = useState(1)
   const navigate = useNavigate(), location = useLocation()
-  const currentView = location.pathname.includes('/categorias') ? 'categorias' : location.pathname.includes('/produtos') ? 'produtos' : location.pathname.includes('/pedidos') ? 'pedidos' : location.pathname.includes('/clientes') ? 'clientes' : 'dashboard'
+  const currentView =
+    location.pathname.includes('/configuracoes')
+      ? 'configuracoes'
+      : location.pathname.includes('/categorias')
+        ? 'categorias'
+        : location.pathname.includes('/produtos')
+          ? 'produtos'
+          : location.pathname.includes('/pedidos')
+            ? 'pedidos'
+            : location.pathname.includes('/clientes')
+              ? 'clientes'
+              : 'dashboard'
   const loadOrders = async () => { setOrdersLoading(true); const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }); setOrders(data || []); setOrdersLoading(false) }
   useEffect(() => { if (['dashboard', 'pedidos', 'clientes'].includes(currentView)) loadOrders() }, [currentView])
 
@@ -571,7 +695,14 @@ function AdminPanel({ products, categories, reload }) {
     )
   }
   const logout = async () => { await supabase.auth.signOut(); navigate('/') }
-  const pageTitle = { dashboard: 'Dashboard', produtos: 'Produtos', categorias: 'Categorias', pedidos: 'Pedidos', clientes: 'Clientes' }[currentView]
+  const pageTitle = {
+    dashboard: 'Dashboard',
+    produtos: 'Produtos',
+    categorias: 'Categorias',
+    pedidos: 'Pedidos',
+    clientes: 'Clientes',
+    configuracoes: 'Configurações'
+  }[currentView]
   const now = new Date()
   const todayKey = now.toISOString().slice(0, 10)
   const monthKey = now.toISOString().slice(0, 7)
@@ -750,7 +881,7 @@ function AdminPanel({ products, categories, reload }) {
 
   return <div className="admin-shell">
     <button className="admin-mobile-toggle mobile-only" onClick={() => setSidebarOpen(!sidebarOpen)}><Menu /></button>
-    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
+    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink><NavLink to="/admin/configuracoes" onClick={() => setSidebarOpen(false)}><Settings /> Configurações</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
     <main className="admin-main"><header><div><span>Painel Administrativo</span><h1>{pageTitle}</h1></div>{currentView === 'produtos' && <button className="primary-btn compact" onClick={() => { setEditing(null); setModal(true) }}><Plus /> Novo produto</button>}{currentView === 'categorias' && <button className="primary-btn compact" onClick={() => { setEditingCategory(null); setCategoryModal(true) }}><Plus /> Nova categoria</button>}</header>
       {currentView === 'dashboard' && <>
         <div className="admin-stats dashboard-stats premium">
@@ -963,6 +1094,13 @@ function AdminPanel({ products, categories, reload }) {
             </>}
       </section>}
 
+      {currentView === 'configuracoes' && <StoreSettings
+        settings={settings}
+        onSaved={updatedSettings => {
+          setSettings(updatedSettings)
+          reload()
+        }}
+      />}
       {currentView === 'clientes' && <section className="admin-card">
         <div className="categories-admin-header">
           <div><h2>Clientes</h2><p>Histórico consolidado automaticamente pelos pedidos.</p></div>
@@ -1051,6 +1189,386 @@ function Pagination({ page, pages, onChange }) {
     <button disabled={page <= 1} onClick={() => onChange(page - 1)}>Anterior</button>
     <span>Página {page} de {pages}</span>
     <button disabled={page >= pages} onClick={() => onChange(page + 1)}>Próxima</button>
+  </div>
+}
+
+
+function StoreSettings({ settings, onSaved }) {
+  const [form, setForm] = useState({ ...DEFAULT_SETTINGS, ...settings })
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    setForm({ ...DEFAULT_SETTINGS, ...settings })
+  }, [settings])
+
+  const update = (key, value) => {
+    setForm(previous => ({ ...previous, [key]: value }))
+    setMessage('')
+    setError('')
+  }
+
+  const uploadImage = async (event, field, folder) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(field)
+    setError('')
+    setMessage('')
+
+    try {
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'webp'
+      const path = `settings/${folder}-${Date.now()}-${crypto.randomUUID()}.${extension}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage
+        .from('products')
+        .getPublicUrl(path)
+
+      update(field, data.publicUrl)
+    } catch (uploadError) {
+      setError(uploadError.message || 'Não foi possível enviar a imagem.')
+    } finally {
+      setUploading('')
+      event.target.value = ''
+    }
+  }
+
+  const saveSettings = async event => {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+    setMessage('')
+
+    const payload = {
+      id: 1,
+      store_name: form.store_name.trim(),
+      whatsapp: normalizePhone(form.whatsapp),
+      instagram: form.instagram.trim(),
+      facebook: form.facebook.trim(),
+      address: form.address.trim(),
+      pix_key: form.pix_key.trim(),
+      business_hours: form.business_hours.trim(),
+      footer_text: form.footer_text.trim(),
+      seo_title: form.seo_title.trim(),
+      seo_description: form.seo_description.trim(),
+      logo_url: form.logo_url.trim(),
+      banner_desktop_url: form.banner_desktop_url.trim(),
+      banner_mobile_url: form.banner_mobile_url.trim(),
+      primary_color: form.primary_color,
+      secondary_color: form.secondary_color,
+      delivery_enabled: Boolean(form.delivery_enabled),
+      pickup_enabled: Boolean(form.pickup_enabled),
+      updated_at: new Date().toISOString()
+    }
+
+    try {
+      const { data, error: saveError } = await supabase
+        .from('store_settings')
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single()
+
+      if (saveError) throw saveError
+
+      const updated = { ...DEFAULT_SETTINGS, ...data }
+      setForm(updated)
+      onSaved(updated)
+      setMessage('Configurações salvas com sucesso.')
+    } catch (saveError) {
+      setError(saveError.message || 'Não foi possível salvar as configurações.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <form className="settings-page" onSubmit={saveSettings}>
+    <section className="admin-card settings-section">
+      <div className="settings-section-title">
+        <div>
+          <Store />
+          <span>
+            <h2>Identidade da loja</h2>
+            <p>Informações exibidas aos clientes.</p>
+          </span>
+        </div>
+      </div>
+
+      <div className="settings-grid two">
+        <label>
+          Nome da loja
+          <input
+            required
+            value={form.store_name}
+            onChange={event => update('store_name', event.target.value)}
+          />
+        </label>
+
+        <label>
+          WhatsApp
+          <input
+            required
+            value={form.whatsapp}
+            onChange={event => update('whatsapp', event.target.value)}
+            placeholder="5511999999999"
+          />
+        </label>
+
+        <label>
+          Instagram
+          <input
+            value={form.instagram}
+            onChange={event => update('instagram', event.target.value)}
+            placeholder="@bellaten.oficial"
+          />
+        </label>
+
+        <label>
+          Facebook
+          <input
+            value={form.facebook}
+            onChange={event => update('facebook', event.target.value)}
+            placeholder="https://facebook.com/..."
+          />
+        </label>
+
+        <label className="settings-full">
+          Endereço
+          <input
+            value={form.address}
+            onChange={event => update('address', event.target.value)}
+            placeholder="Rua, número, bairro e cidade"
+          />
+        </label>
+
+        <label>
+          Horário de atendimento
+          <input
+            value={form.business_hours}
+            onChange={event => update('business_hours', event.target.value)}
+            placeholder="Segunda a sábado, 9h às 18h"
+          />
+        </label>
+
+        <label>
+          Chave Pix
+          <input
+            value={form.pix_key}
+            onChange={event => update('pix_key', event.target.value)}
+          />
+        </label>
+
+        <label className="settings-full">
+          Texto do rodapé
+          <textarea
+            value={form.footer_text}
+            onChange={event => update('footer_text', event.target.value)}
+          />
+        </label>
+      </div>
+    </section>
+
+    <section className="admin-card settings-section">
+      <div className="settings-section-title">
+        <div>
+          <ImagePlus />
+          <span>
+            <h2>Imagens</h2>
+            <p>Logo e banners usados na loja.</p>
+          </span>
+        </div>
+      </div>
+
+      <div className="settings-media-grid">
+        <SettingsImageField
+          title="Logo"
+          field="logo_url"
+          value={form.logo_url}
+          uploading={uploading === 'logo_url'}
+          onUpload={event => uploadImage(event, 'logo_url', 'logo')}
+          onChange={value => update('logo_url', value)}
+        />
+
+        <SettingsImageField
+          title="Banner desktop"
+          field="banner_desktop_url"
+          value={form.banner_desktop_url}
+          uploading={uploading === 'banner_desktop_url'}
+          onUpload={event => uploadImage(event, 'banner_desktop_url', 'banner-desktop')}
+          onChange={value => update('banner_desktop_url', value)}
+          wide
+        />
+
+        <SettingsImageField
+          title="Banner mobile"
+          field="banner_mobile_url"
+          value={form.banner_mobile_url}
+          uploading={uploading === 'banner_mobile_url'}
+          onUpload={event => uploadImage(event, 'banner_mobile_url', 'banner-mobile')}
+          onChange={value => update('banner_mobile_url', value)}
+          wide
+        />
+      </div>
+    </section>
+
+    <section className="admin-card settings-section">
+      <div className="settings-section-title">
+        <div>
+          <Palette />
+          <span>
+            <h2>Aparência e atendimento</h2>
+            <p>Cores e formas de recebimento do pedido.</p>
+          </span>
+        </div>
+      </div>
+
+      <div className="settings-grid two">
+        <label className="color-field">
+          Cor principal
+          <span>
+            <input
+              type="color"
+              value={form.primary_color}
+              onChange={event => update('primary_color', event.target.value)}
+            />
+            <input
+              value={form.primary_color}
+              onChange={event => update('primary_color', event.target.value)}
+            />
+          </span>
+        </label>
+
+        <label className="color-field">
+          Cor secundária
+          <span>
+            <input
+              type="color"
+              value={form.secondary_color}
+              onChange={event => update('secondary_color', event.target.value)}
+            />
+            <input
+              value={form.secondary_color}
+              onChange={event => update('secondary_color', event.target.value)}
+            />
+          </span>
+        </label>
+
+        <label className="settings-toggle">
+          <input
+            type="checkbox"
+            checked={form.delivery_enabled}
+            onChange={event => update('delivery_enabled', event.target.checked)}
+          />
+          <span>
+            <strong>Permitir entrega</strong>
+            <small>Mostra a opção Entrega no checkout.</small>
+          </span>
+        </label>
+
+        <label className="settings-toggle">
+          <input
+            type="checkbox"
+            checked={form.pickup_enabled}
+            onChange={event => update('pickup_enabled', event.target.checked)}
+          />
+          <span>
+            <strong>Permitir retirada</strong>
+            <small>Mostra a opção Retirada no checkout.</small>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <section className="admin-card settings-section">
+      <div className="settings-section-title">
+        <div>
+          <Globe2 />
+          <span>
+            <h2>Google e compartilhamento</h2>
+            <p>Título e descrição básica da loja.</p>
+          </span>
+        </div>
+      </div>
+
+      <div className="settings-grid">
+        <label>
+          Título do site
+          <input
+            value={form.seo_title}
+            onChange={event => update('seo_title', event.target.value)}
+          />
+        </label>
+
+        <label>
+          Descrição do site
+          <textarea
+            value={form.seo_description}
+            onChange={event => update('seo_description', event.target.value)}
+          />
+        </label>
+      </div>
+    </section>
+
+    {(message || error) && <div className={error ? 'settings-feedback error' : 'settings-feedback success'}>
+      {error || message}
+    </div>}
+
+    <div className="settings-save-bar">
+      <span>As alterações aparecem na loja após salvar.</span>
+      <button className="primary-btn" disabled={saving || Boolean(uploading)}>
+        {saving
+          ? <><LoaderCircle className="spin" /> Salvando...</>
+          : <><Save /> Salvar configurações</>}
+      </button>
+    </div>
+  </form>
+}
+
+function SettingsImageField({
+  title,
+  field,
+  value,
+  uploading,
+  onUpload,
+  onChange,
+  wide = false
+}) {
+  return <div className={`settings-image-field ${wide ? 'wide' : ''}`}>
+    <strong>{title}</strong>
+
+    <div className={`settings-image-preview ${wide ? 'banner' : ''}`}>
+      {value
+        ? <img src={value} alt={title} />
+        : <ImagePlus />}
+    </div>
+
+    <label className="settings-upload-button">
+      <Upload />
+      {uploading ? 'Enviando...' : 'Escolher imagem'}
+      <input
+        type="file"
+        accept="image/*"
+        disabled={uploading}
+        onChange={onUpload}
+      />
+    </label>
+
+    <input
+      className="settings-url"
+      value={value}
+      onChange={event => onChange(event.target.value)}
+      placeholder="Ou cole a URL da imagem"
+    />
   </div>
 }
 

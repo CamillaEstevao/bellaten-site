@@ -3435,3 +3435,236 @@ button:disabled {
 .order-customer {
   grid-template-columns: 1fr !important;
 }
+
+
+/* =========================================================
+   CONFIGURAÇÕES DA LOJA — MOBILE
+   ========================================================= */
+
+.custom-hero {
+  background-image: var(--hero-mobile, var(--hero-desktop)) !important;
+}
+
+.settings-page {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 112px;
+}
+
+.settings-section {
+  padding: 17px 14px !important;
+  border-radius: 16px !important;
+  overflow: visible !important;
+}
+
+.settings-section-title {
+  margin-bottom: 18px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #2b2527;
+}
+
+.settings-section-title > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.settings-section-title svg {
+  width: 22px;
+  height: 22px;
+  color: var(--pink2);
+  flex: 0 0 auto;
+}
+
+.settings-section-title h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+}
+
+.settings-section-title p {
+  margin: 0;
+  color: #93898d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.settings-grid,
+.settings-grid.two {
+  display: grid;
+  grid-template-columns: 1fr !important;
+  gap: 15px;
+}
+
+.settings-full {
+  grid-column: auto;
+}
+
+.settings-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #b6aaaf;
+  font-size: 12px;
+}
+
+.settings-grid input,
+.settings-grid textarea,
+.settings-url {
+  width: 100%;
+  color: #fff;
+  background: #0e0e0e;
+  border: 1px solid #352a2e;
+  border-radius: 11px;
+  outline: none;
+}
+
+.settings-grid input,
+.settings-url {
+  height: 48px;
+  padding: 0 12px;
+}
+
+.settings-grid textarea {
+  min-height: 96px;
+  padding: 12px;
+}
+
+.settings-media-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.settings-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-image-preview,
+.settings-image-preview.banner {
+  height: 170px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0d0d0d;
+  border: 1px dashed #50333e;
+  border-radius: 14px;
+}
+
+.settings-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.settings-upload-button {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #f4ced9;
+  background: #24171c;
+  border: 1px solid #5c3543;
+  border-radius: 11px;
+}
+
+.settings-upload-button input {
+  display: none;
+}
+
+.color-field > span {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 9px;
+}
+
+.color-field input[type="color"] {
+  width: 58px;
+  padding: 4px;
+}
+
+.settings-toggle {
+  min-height: 76px;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 12px !important;
+  padding: 14px;
+  background: #111;
+  border: 1px solid #30292c;
+  border-radius: 13px;
+}
+
+.settings-toggle input {
+  width: 21px !important;
+  height: 21px !important;
+  flex: 0 0 auto;
+  accent-color: var(--pink);
+}
+
+.settings-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settings-toggle strong {
+  color: #f4e7eb;
+}
+
+.settings-toggle small {
+  color: #8f8589;
+  line-height: 1.35;
+}
+
+.settings-feedback {
+  padding: 13px 14px;
+  border-radius: 11px;
+  font-size: 12px;
+}
+
+.settings-feedback.success {
+  color: #9be6af;
+  background: #14291b;
+  border: 1px solid #2e6440;
+}
+
+.settings-feedback.error {
+  color: #ffabb8;
+  background: #32191e;
+  border: 1px solid #69313b;
+}
+
+.settings-save-bar {
+  position: sticky;
+  bottom: 10px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px;
+  background: rgba(14, 14, 14, .98);
+  border: 1px solid #3c2d32;
+  border-radius: 15px;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, .6);
+}
+
+.settings-save-bar span {
+  color: #9c9195;
+  font-size: 11px;
+  text-align: center;
+}
+
+.settings-save-bar .primary-btn {
+  width: 100%;
+  min-height: 50px;
+}
+
+.footer-address {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #a99fa3;
+  font-size: 12px;
+}

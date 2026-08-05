@@ -2842,3 +2842,257 @@ button:disabled {
 .order-customer {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+
+
+/* =========================================================
+   CONFIGURAÇÕES DA LOJA — DESKTOP
+   ========================================================= */
+
+.custom-hero {
+  background-image: var(--hero-desktop) !important;
+}
+
+.settings-page {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 96px;
+}
+
+.settings-section {
+  padding: 24px;
+  overflow: visible;
+}
+
+.settings-section-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #2b2527;
+}
+
+.settings-section-title > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings-section-title svg {
+  width: 25px;
+  height: 25px;
+  color: var(--pink2);
+}
+
+.settings-section-title h2 {
+  margin: 0 0 4px;
+  font-size: 21px;
+}
+
+.settings-section-title p {
+  margin: 0;
+  color: #93898d;
+  font-size: 13px;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.settings-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #b6aaaf;
+  font-size: 13px;
+}
+
+.settings-grid input,
+.settings-grid textarea,
+.settings-url {
+  width: 100%;
+  color: #fff;
+  background: #0e0e0e;
+  border: 1px solid #352a2e;
+  border-radius: 11px;
+  outline: none;
+}
+
+.settings-grid input,
+.settings-url {
+  height: 46px;
+  padding: 0 13px;
+}
+
+.settings-grid textarea {
+  min-height: 100px;
+  padding: 13px;
+  resize: vertical;
+}
+
+.settings-grid input:focus,
+.settings-grid textarea:focus,
+.settings-url:focus {
+  border-color: #9e5269;
+  box-shadow: 0 0 0 3px rgba(227, 107, 145, .1);
+}
+
+.settings-full {
+  grid-column: 1 / -1;
+}
+
+.settings-media-grid {
+  display: grid;
+  grid-template-columns: .7fr 1.15fr 1.15fr;
+  gap: 18px;
+}
+
+.settings-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.settings-image-preview {
+  height: 150px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0d0d0d;
+  border: 1px dashed #50333e;
+  border-radius: 14px;
+}
+
+.settings-image-preview.banner {
+  height: 150px;
+}
+
+.settings-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.settings-image-preview svg {
+  width: 36px;
+  height: 36px;
+  color: #6f5961;
+}
+
+.settings-upload-button {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #f4ced9;
+  background: #24171c;
+  border: 1px solid #5c3543;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.settings-upload-button input {
+  display: none;
+}
+
+.settings-upload-button svg {
+  width: 18px;
+}
+
+.color-field > span {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+}
+
+.color-field input[type="color"] {
+  width: 56px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.settings-toggle {
+  min-height: 78px;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 13px !important;
+  padding: 15px;
+  background: #111;
+  border: 1px solid #30292c;
+  border-radius: 13px;
+  cursor: pointer;
+}
+
+.settings-toggle input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  accent-color: var(--pink);
+}
+
+.settings-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settings-toggle strong {
+  color: #f4e7eb;
+}
+
+.settings-toggle small {
+  color: #8f8589;
+}
+
+.settings-feedback {
+  padding: 14px 17px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.settings-feedback.success {
+  color: #9be6af;
+  background: #14291b;
+  border: 1px solid #2e6440;
+}
+
+.settings-feedback.error {
+  color: #ffabb8;
+  background: #32191e;
+  border: 1px solid #69313b;
+}
+
+.settings-save-bar {
+  position: sticky;
+  bottom: 18px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  background: rgba(15, 15, 15, .96);
+  border: 1px solid #3c2d32;
+  border-radius: 15px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(14px);
+}
+
+.settings-save-bar span {
+  color: #9c9195;
+  font-size: 13px;
+}
+
+.footer-address {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a99fa3;
+  font-size: 12px;
+}

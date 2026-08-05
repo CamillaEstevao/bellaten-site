@@ -3322,3 +3322,260 @@ button:disabled {
 .report-customer-cell small {
   color: #8f8589;
 }
+
+
+/* =========================================================
+   CUPONS — CHECKOUT E PAINEL DESKTOP
+   ========================================================= */
+
+.coupon-box {
+  display: grid;
+  gap: 11px;
+  padding: 15px;
+  background: #111;
+  border: 1px solid #33272b;
+  border-radius: 13px;
+}
+
+.coupon-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coupon-title > svg {
+  color: var(--pink2);
+}
+
+.coupon-title span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coupon-title small {
+  color: #91878b;
+}
+
+.coupon-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.coupon-input-row input {
+  height: 45px;
+  padding: 0 13px;
+  color: #fff;
+  text-transform: uppercase;
+  background: #0c0c0c;
+  border: 1px solid #3b2e33;
+  border-radius: 10px;
+  outline: none;
+}
+
+.coupon-apply-button,
+.coupon-remove-button {
+  min-width: 104px;
+  padding: 0 15px;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.coupon-apply-button {
+  background: #b94369;
+  border: 1px solid #e37598;
+}
+
+.coupon-remove-button {
+  background: #24191d;
+  border: 1px solid #5c3743;
+}
+
+.coupon-success {
+  color: #8de0a5;
+}
+
+.coupon-error {
+  color: #ff8da3;
+}
+
+.checkout-summary {
+  display: grid;
+  gap: 9px;
+  padding-top: 6px;
+}
+
+.checkout-summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkout-summary > div:not(.checkout-total) {
+  color: #a69ba0;
+  font-size: 13px;
+}
+
+.checkout-discount strong {
+  color: #8de0a5;
+}
+
+.coupons-page {
+  overflow: hidden;
+}
+
+.coupons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.coupon-admin-card {
+  padding: 18px;
+  background: #121212;
+  border: 1px solid #30282b;
+  border-radius: 15px;
+}
+
+.coupon-admin-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.coupon-state {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.coupon-state.active {
+  color: #8ee1a7;
+  background: #153220;
+}
+
+.coupon-state.inactive {
+  color: #aaa;
+  background: #252525;
+}
+
+.coupon-state.scheduled {
+  color: #f6ce7e;
+  background: #332711;
+}
+
+.coupon-state.expired {
+  color: #ff97a7;
+  background: #38181e;
+}
+
+.coupon-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.coupon-card-actions button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #d8cbd0;
+  background: #1b1b1b;
+  border: 1px solid #383033;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.coupon-card-actions button.danger {
+  color: #ff7890;
+}
+
+.coupon-card-actions svg {
+  width: 15px;
+}
+
+.coupon-code-display {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 20px 0 10px;
+  color: var(--pink2);
+}
+
+.coupon-code-display strong {
+  font-size: 22px;
+  letter-spacing: .08em;
+}
+
+.coupon-admin-card h3 {
+  margin: 0 0 7px;
+  font-size: 17px;
+}
+
+.coupon-admin-card > p {
+  min-height: 38px;
+  margin: 0 0 16px;
+  color: #988e92;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.coupon-admin-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.coupon-admin-details span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  color: #8f8589;
+  background: #0d0d0d;
+  border-radius: 9px;
+  font-size: 10px;
+}
+
+.coupon-admin-details strong {
+  color: #f5e9ed;
+  font-size: 12px;
+}
+
+.coupon-period {
+  display: block;
+  margin-top: 12px;
+  color: #81777b;
+  line-height: 1.5;
+}
+
+.coupons-empty {
+  grid-column: 1 / -1;
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: #8f8589;
+  text-align: center;
+}
+
+.coupons-empty > svg {
+  width: 42px;
+  height: 42px;
+  color: var(--pink2);
+}
+
+.coupons-empty h3,
+.coupons-empty p {
+  margin: 0;
+}
+
+.coupon-modal {
+  width: min(620px, 100%);
+}

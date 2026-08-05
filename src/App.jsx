@@ -5,7 +5,7 @@ import {
   Plus, Pencil, Trash2, Package, LayoutDashboard, Tags, LogOut, Minus, MessageCircle,
   Sparkles, Gift, Heart, Upload, LoaderCircle, ImagePlus, ClipboardList, Users, ChevronRight,
   MapPin, Store, CheckCircle2, Clock3, Ban, Eye, Phone, Mail, TrendingUp,
-  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard, FileSpreadsheet, Download, CalendarDays
+  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard, FileSpreadsheet, Download, CalendarDays, TicketPercent, Power
 } from 'lucide-react'
 import logo from './assets/logo-bellaten-cropped.png'
 import { categories as fallbackCategories } from './data'
@@ -504,6 +504,56 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+  const [coupon, setCoupon] = useState(null)
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [couponMessage, setCouponMessage] = useState('')
+
+  const discount = Number(coupon?.discount || 0)
+  const checkoutTotal = Math.max(0, Number(total) - discount)
+
+  const applyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase()
+
+    if (!code) {
+      setCoupon(null)
+      setCouponMessage('Digite um cupom.')
+      return
+    }
+
+    setCouponLoading(true)
+    setCouponMessage('')
+    setError('')
+
+    try {
+      const { data, error: couponError } = await supabase.rpc(
+        'validate_coupon',
+        {
+          coupon_code_input: code,
+          cart_total_input: Number(total)
+        }
+      )
+
+      if (couponError) throw couponError
+
+      setCoupon(data)
+      setCouponCode(code)
+      setCouponMessage(`Cupom aplicado: desconto de ${money(data.discount)}.`)
+    } catch (couponError) {
+      setCoupon(null)
+      setCouponMessage(
+        couponError.message || 'Cupom inválido ou indisponível.'
+      )
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  const removeCoupon = () => {
+    setCoupon(null)
+    setCouponCode('')
+    setCouponMessage('')
+  }
 
   const update = (key, value) => setForm(previous => ({
     ...previous,
@@ -525,7 +575,7 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
       }))
 
       const { data, error: orderError } = await supabase.rpc('create_order', {
-        order_payload: { ...form, items }
+        order_payload: { ...form, items, coupon_code: coupon?.code || null }
       })
 
       if (orderError) throw orderError
@@ -534,6 +584,17 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
         data?.order_number ||
         data?.[0]?.order_number ||
         'novo'
+
+      const finalTotal = Number(
+        data?.total ??
+        data?.[0]?.total ??
+        checkoutTotal
+      )
+      const finalDiscount = Number(
+        data?.discount ??
+        data?.[0]?.discount ??
+        discount
+      )
 
       const lines = cart.map(item =>
         `• ${item.name} — ${item.qty}x ${money(item.price)} = ${money(Number(item.price) * item.qty)}`
@@ -550,7 +611,8 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
         `${delivery}\n` +
         `Pagamento: ${form.payment_method}\n\n` +
         `${lines.join('\n')}\n\n` +
-        `Total: ${money(total)}` +
+        `${finalDiscount > 0 ? `Cupom: ${coupon?.code}\nDesconto: -${money(finalDiscount)}\n` : ''}` +
+        `Total: ${money(finalTotal)}` +
         `${form.notes ? `\nObservações: ${form.notes}` : ''}`
 
       const whatsapp = normalizePhone(settings.whatsapp || DEFAULT_SETTINGS.whatsapp)
@@ -665,6 +727,50 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
         </select>
       </label>
 
+      <div className="coupon-box">
+        <div className="coupon-title">
+          <TicketPercent />
+          <span>
+            <strong>Cupom de desconto</strong>
+            <small>Digite o código e clique em aplicar.</small>
+          </span>
+        </div>
+
+        <div className="coupon-input-row">
+          <input
+            value={couponCode}
+            onChange={event => {
+              setCouponCode(event.target.value.toUpperCase())
+              if (coupon) setCoupon(null)
+              setCouponMessage('')
+            }}
+            placeholder="EX.: BELLATEN10"
+            maxLength={30}
+          />
+
+          {coupon
+            ? <button
+                type="button"
+                className="coupon-remove-button"
+                onClick={removeCoupon}
+              >
+                Remover
+              </button>
+            : <button
+                type="button"
+                className="coupon-apply-button"
+                onClick={applyCoupon}
+                disabled={couponLoading}
+              >
+                {couponLoading ? 'Validando...' : 'Aplicar'}
+              </button>}
+        </div>
+
+        {couponMessage && <small className={coupon ? 'coupon-success' : 'coupon-error'}>
+          {couponMessage}
+        </small>}
+      </div>
+
       <label>
         Observações
         <textarea
@@ -674,9 +780,22 @@ function CheckoutModal({ cart, total, settings, onClose, onSuccess }) {
         />
       </label>
 
-      <div className="checkout-total">
-        <span>Total do pedido</span>
-        <strong>{money(total)}</strong>
+      <div className="checkout-summary">
+        {discount > 0 && <>
+          <div>
+            <span>Subtotal</span>
+            <strong>{money(total)}</strong>
+          </div>
+          <div className="checkout-discount">
+            <span>Desconto ({coupon.code})</span>
+            <strong>-{money(discount)}</strong>
+          </div>
+        </>}
+
+        <div className="checkout-total">
+          <span>Total do pedido</span>
+          <strong>{money(checkoutTotal)}</strong>
+        </div>
       </div>
 
       {error && <p className="form-error">{error}</p>}
@@ -726,13 +845,20 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
 
   const [customerQuery, setCustomerQuery] = useState('')
   const [customerPage, setCustomerPage] = useState(1)
+
+  const [coupons, setCoupons] = useState([])
+  const [couponsLoading, setCouponsLoading] = useState(false)
+  const [couponModal, setCouponModal] = useState(false)
+  const [editingCoupon, setEditingCoupon] = useState(null)
   const navigate = useNavigate(), location = useLocation()
   const currentView =
     location.pathname.includes('/configuracoes')
       ? 'configuracoes'
-      : location.pathname.includes('/relatorios')
-        ? 'relatorios'
-        : location.pathname.includes('/categorias')
+      : location.pathname.includes('/cupons')
+        ? 'cupons'
+        : location.pathname.includes('/relatorios')
+          ? 'relatorios'
+          : location.pathname.includes('/categorias')
           ? 'categorias'
           : location.pathname.includes('/produtos')
             ? 'produtos'
@@ -741,10 +867,43 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
               : location.pathname.includes('/clientes')
                 ? 'clientes'
                 : 'dashboard'
-  const loadOrders = async () => { setOrdersLoading(true); const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }); setOrders(data || []); setOrdersLoading(false) }
+  const loadOrders = async () => {
+    setOrdersLoading(true)
+    const { data } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    setOrders(data || [])
+    setOrdersLoading(false)
+  }
+
+  const loadCoupons = async () => {
+    setCouponsLoading(true)
+
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Erro ao carregar cupons:', error)
+      setCoupons([])
+    } else {
+      setCoupons(data || [])
+    }
+
+    setCouponsLoading(false)
+  }
   useEffect(() => {
     if (['dashboard', 'pedidos', 'clientes', 'relatorios'].includes(currentView)) {
       loadOrders()
+    }
+  }, [currentView])
+
+  useEffect(() => {
+    if (currentView === 'cupons') {
+      loadCoupons()
     }
   }, [currentView])
 
@@ -771,6 +930,64 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
       previous ? { ...previous, status } : previous
     )
   }
+  const saveCoupon = async form => {
+    const payload = {
+      code: form.code.trim().toUpperCase(),
+      description: form.description.trim(),
+      discount_type: form.discount_type,
+      discount_value: Number(form.discount_value),
+      min_order: Number(form.min_order || 0),
+      starts_at: form.starts_at || null,
+      ends_at: form.ends_at || null,
+      usage_limit: form.usage_limit === '' ? null : Number(form.usage_limit),
+      active: Boolean(form.active),
+      updated_at: new Date().toISOString()
+    }
+
+    const result = form.id
+      ? await supabase.from('coupons').update(payload).eq('id', form.id)
+      : await supabase.from('coupons').insert(payload)
+
+    if (result.error) throw result.error
+
+    setCouponModal(false)
+    setEditingCoupon(null)
+    await loadCoupons()
+  }
+
+  const removeCouponAdmin = async coupon => {
+    if (!confirm(`Excluir o cupom ${coupon.code}?`)) return
+
+    const { error } = await supabase
+      .from('coupons')
+      .delete()
+      .eq('id', coupon.id)
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    await loadCoupons()
+  }
+
+  const toggleCouponActive = async coupon => {
+    const { error } = await supabase
+      .from('coupons')
+      .update({
+        active: !coupon.active,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', coupon.id)
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    await loadCoupons()
+  }
+
   const logout = async () => { await supabase.auth.signOut(); navigate('/') }
   const pageTitle = {
     dashboard: 'Dashboard',
@@ -779,6 +996,7 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
     pedidos: 'Pedidos',
     clientes: 'Clientes',
     relatorios: 'Relatórios',
+    cupons: 'Cupons',
     configuracoes: 'Configurações'
   }[currentView]
   const now = new Date()
@@ -959,8 +1177,8 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
 
   return <div className="admin-shell">
     <button className="admin-mobile-toggle mobile-only" onClick={() => setSidebarOpen(!sidebarOpen)}><Menu /></button>
-    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink><NavLink to="/admin/relatorios" onClick={() => setSidebarOpen(false)}><FileSpreadsheet /> Relatórios</NavLink><NavLink to="/admin/configuracoes" onClick={() => setSidebarOpen(false)}><Settings /> Configurações</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
-    <main className="admin-main"><header><div><span>Painel Administrativo</span><h1>{pageTitle}</h1></div>{currentView === 'produtos' && <button className="primary-btn compact" onClick={() => { setEditing(null); setModal(true) }}><Plus /> Novo produto</button>}{currentView === 'categorias' && <button className="primary-btn compact" onClick={() => { setEditingCategory(null); setCategoryModal(true) }}><Plus /> Nova categoria</button>}</header>
+    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink><NavLink to="/admin/relatorios" onClick={() => setSidebarOpen(false)}><FileSpreadsheet /> Relatórios</NavLink><NavLink to="/admin/cupons" onClick={() => setSidebarOpen(false)}><TicketPercent /> Cupons</NavLink><NavLink to="/admin/configuracoes" onClick={() => setSidebarOpen(false)}><Settings /> Configurações</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
+    <main className="admin-main"><header><div><span>Painel Administrativo</span><h1>{pageTitle}</h1></div>{currentView === 'produtos' && <button className="primary-btn compact" onClick={() => { setEditing(null); setModal(true) }}><Plus /> Novo produto</button>}{currentView === 'categorias' && <button className="primary-btn compact" onClick={() => { setEditingCategory(null); setCategoryModal(true) }}><Plus /> Nova categoria</button>}{currentView === 'cupons' && <button className="primary-btn compact" onClick={() => { setEditingCoupon(null); setCouponModal(true) }}><Plus /> Novo cupom</button>}</header>
       {currentView === 'dashboard' && <>
         <div className="admin-stats dashboard-stats premium">
           <div><span>Faturamento hoje</span><strong>{money(revenueToday)}</strong><TrendingUp /></div>
@@ -1172,6 +1390,21 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
             </>}
       </section>}
 
+      {currentView === 'cupons' && <CouponsPanel
+        coupons={coupons}
+        loading={couponsLoading}
+        onNew={() => {
+          setEditingCoupon(null)
+          setCouponModal(true)
+        }}
+        onEdit={coupon => {
+          setEditingCoupon(coupon)
+          setCouponModal(true)
+        }}
+        onDelete={removeCouponAdmin}
+        onToggle={toggleCouponActive}
+      />}
+
       {currentView === 'relatorios' && <ReportsPanel
         orders={orders}
         products={products}
@@ -1226,7 +1459,7 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
         <Pagination page={customerPage} pages={customerPages} onChange={setCustomerPage} />
       </section>}
     </main>
-    {modal && <ProductModal product={editing} categories={categories} onClose={() => { setModal(false); setEditing(null) }} onSave={save} />} {categoryModal && <CategoryModal category={editingCategory} onClose={() => { setCategoryModal(false); setEditingCategory(null) }} onSave={saveCategory} />} {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedOrder(null)} onStatus={updateOrderStatus} />}
+    {modal && <ProductModal product={editing} categories={categories} onClose={() => { setModal(false); setEditing(null) }} onSave={save} />} {categoryModal && <CategoryModal category={editingCategory} onClose={() => { setCategoryModal(false); setEditingCategory(null) }} onSave={saveCategory} />} {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedOrder(null)} onStatus={updateOrderStatus} />} {couponModal && <CouponModal coupon={editingCoupon} onClose={() => { setCouponModal(false); setEditingCoupon(null) }} onSave={saveCoupon} />}
   </div>
 }
 
@@ -1276,6 +1509,314 @@ function Pagination({ page, pages, onChange }) {
 }
 
 
+
+
+function CouponsPanel({
+  coupons,
+  loading,
+  onNew,
+  onEdit,
+  onDelete,
+  onToggle
+}) {
+  const now = new Date()
+
+  const couponState = coupon => {
+    if (!coupon.active) return { label: 'Inativo', className: 'inactive' }
+    if (coupon.starts_at && new Date(coupon.starts_at) > now) {
+      return { label: 'Agendado', className: 'scheduled' }
+    }
+    if (coupon.ends_at && new Date(coupon.ends_at) < now) {
+      return { label: 'Expirado', className: 'expired' }
+    }
+    if (
+      coupon.usage_limit !== null &&
+      Number(coupon.usage_count) >= Number(coupon.usage_limit)
+    ) {
+      return { label: 'Esgotado', className: 'expired' }
+    }
+    return { label: 'Ativo', className: 'active' }
+  }
+
+  return <section className="admin-card coupons-page">
+    <div className="categories-admin-header">
+      <div>
+        <h2>Cupons de desconto</h2>
+        <p>Crie promoções com porcentagem ou valor fixo.</p>
+      </div>
+      <span>{coupons.length} cupom(ns)</span>
+    </div>
+
+    {loading
+      ? <div className="table-empty">Carregando cupons...</div>
+      : <div className="coupons-grid">
+          {coupons.map(coupon => {
+            const state = couponState(coupon)
+            const discountLabel = coupon.discount_type === 'percent'
+              ? `${Number(coupon.discount_value)}%`
+              : money(coupon.discount_value)
+
+            return <article className="coupon-admin-card" key={coupon.id}>
+              <div className="coupon-admin-top">
+                <span className={`coupon-state ${state.className}`}>
+                  {state.label}
+                </span>
+
+                <div className="coupon-card-actions">
+                  <button
+                    type="button"
+                    title={coupon.active ? 'Desativar' : 'Ativar'}
+                    onClick={() => onToggle(coupon)}
+                  >
+                    <Power />
+                  </button>
+                  <button type="button" onClick={() => onEdit(coupon)}>
+                    <Pencil />
+                  </button>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() => onDelete(coupon)}
+                  >
+                    <Trash2 />
+                  </button>
+                </div>
+              </div>
+
+              <div className="coupon-code-display">
+                <TicketPercent />
+                <strong>{coupon.code}</strong>
+              </div>
+
+              <h3>{discountLabel} de desconto</h3>
+              <p>{coupon.description || 'Cupom promocional da loja.'}</p>
+
+              <div className="coupon-admin-details">
+                <span>
+                  Pedido mínimo
+                  <strong>{money(coupon.min_order || 0)}</strong>
+                </span>
+                <span>
+                  Utilizações
+                  <strong>
+                    {coupon.usage_count || 0}
+                    {coupon.usage_limit !== null
+                      ? ` / ${coupon.usage_limit}`
+                      : ' / ∞'}
+                  </strong>
+                </span>
+              </div>
+
+              {(coupon.starts_at || coupon.ends_at) && <small className="coupon-period">
+                {coupon.starts_at
+                  ? `Início: ${dateTime(coupon.starts_at)}`
+                  : 'Início imediato'}
+                {' · '}
+                {coupon.ends_at
+                  ? `Fim: ${dateTime(coupon.ends_at)}`
+                  : 'Sem expiração'}
+              </small>}
+            </article>
+          })}
+
+          {!coupons.length && <div className="coupons-empty">
+            <TicketPercent />
+            <h3>Nenhum cupom cadastrado</h3>
+            <p>Crie o primeiro cupom promocional da loja.</p>
+            <button type="button" className="primary-btn" onClick={onNew}>
+              <Plus /> Criar cupom
+            </button>
+          </div>}
+        </div>}
+  </section>
+}
+
+function CouponModal({ coupon, onClose, onSave }) {
+  const localDateTime = value => {
+    if (!value) return ''
+    const date = new Date(value)
+    const offset = date.getTimezoneOffset()
+    return new Date(date.getTime() - offset * 60000)
+      .toISOString()
+      .slice(0, 16)
+  }
+
+  const [form, setForm] = useState(coupon
+    ? {
+        ...coupon,
+        starts_at: localDateTime(coupon.starts_at),
+        ends_at: localDateTime(coupon.ends_at)
+      }
+    : {
+        code: '',
+        description: '',
+        discount_type: 'percent',
+        discount_value: 10,
+        min_order: 0,
+        starts_at: '',
+        ends_at: '',
+        usage_limit: '',
+        active: true
+      }
+  )
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const update = (key, value) => {
+    setForm(previous => ({ ...previous, [key]: value }))
+    setError('')
+  }
+
+  const submit = async event => {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+
+    try {
+      if (
+        form.discount_type === 'percent' &&
+        Number(form.discount_value) > 100
+      ) {
+        throw new Error('O desconto percentual não pode passar de 100%.')
+      }
+
+      if (
+        form.starts_at &&
+        form.ends_at &&
+        new Date(form.ends_at) <= new Date(form.starts_at)
+      ) {
+        throw new Error('A data final precisa ser posterior à data inicial.')
+      }
+
+      await onSave(form)
+    } catch (saveError) {
+      setError(saveError.message || 'Não foi possível salvar o cupom.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <div className="modal-backdrop">
+    <form className="modal coupon-modal" onSubmit={submit}>
+      <div className="drawer-title">
+        <div>
+          <small>Promoções</small>
+          <h2>{coupon ? 'Editar cupom' : 'Novo cupom'}</h2>
+        </div>
+        <button type="button" onClick={onClose}><X /></button>
+      </div>
+
+      <label>
+        Código do cupom
+        <input
+          required
+          value={form.code}
+          onChange={event => update('code', event.target.value.toUpperCase())}
+          placeholder="BELLATEN10"
+          maxLength={30}
+        />
+      </label>
+
+      <label>
+        Descrição
+        <input
+          value={form.description}
+          onChange={event => update('description', event.target.value)}
+          placeholder="Ex.: desconto de boas-vindas"
+        />
+      </label>
+
+      <div className="form-row">
+        <label>
+          Tipo de desconto
+          <select
+            value={form.discount_type}
+            onChange={event => update('discount_type', event.target.value)}
+          >
+            <option value="percent">Porcentagem</option>
+            <option value="fixed">Valor fixo</option>
+          </select>
+        </label>
+
+        <label>
+          {form.discount_type === 'percent'
+            ? 'Porcentagem (%)'
+            : 'Valor do desconto (R$)'}
+          <input
+            required
+            type="number"
+            min="0.01"
+            max={form.discount_type === 'percent' ? 100 : undefined}
+            step="0.01"
+            value={form.discount_value}
+            onChange={event => update('discount_value', event.target.value)}
+          />
+        </label>
+      </div>
+
+      <div className="form-row">
+        <label>
+          Pedido mínimo
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.min_order}
+            onChange={event => update('min_order', event.target.value)}
+          />
+        </label>
+
+        <label>
+          Limite de utilizações
+          <input
+            type="number"
+            min="1"
+            value={form.usage_limit}
+            onChange={event => update('usage_limit', event.target.value)}
+            placeholder="Vazio = ilimitado"
+          />
+        </label>
+      </div>
+
+      <div className="form-row">
+        <label>
+          Início
+          <input
+            type="datetime-local"
+            value={form.starts_at}
+            onChange={event => update('starts_at', event.target.value)}
+          />
+        </label>
+
+        <label>
+          Expiração
+          <input
+            type="datetime-local"
+            value={form.ends_at}
+            onChange={event => update('ends_at', event.target.value)}
+          />
+        </label>
+      </div>
+
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={form.active}
+          onChange={event => update('active', event.target.checked)}
+        />
+        Cupom ativo
+      </label>
+
+      {error && <p className="form-error">{error}</p>}
+
+      <button className="primary-btn full" disabled={saving}>
+        {saving
+          ? <><LoaderCircle className="spin" /> Salvando...</>
+          : 'Salvar cupom'}
+      </button>
+    </form>
+  </div>
+}
 
 function ReportsPanel({ orders, products, loading }) {
   const today = new Date()

@@ -5,7 +5,7 @@ import {
   Plus, Pencil, Trash2, Package, LayoutDashboard, Tags, LogOut, Minus, MessageCircle,
   Sparkles, Gift, Heart, Upload, LoaderCircle, ImagePlus, ClipboardList, Users, ChevronRight,
   MapPin, Store, CheckCircle2, Clock3, Ban, Eye, Phone, Mail, TrendingUp,
-  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard
+  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard, FileSpreadsheet, Download, CalendarDays
 } from 'lucide-react'
 import logo from './assets/logo-bellaten-cropped.png'
 import { categories as fallbackCategories } from './data'
@@ -730,17 +730,23 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
   const currentView =
     location.pathname.includes('/configuracoes')
       ? 'configuracoes'
-      : location.pathname.includes('/categorias')
-        ? 'categorias'
-        : location.pathname.includes('/produtos')
-          ? 'produtos'
-          : location.pathname.includes('/pedidos')
-            ? 'pedidos'
-            : location.pathname.includes('/clientes')
-              ? 'clientes'
-              : 'dashboard'
+      : location.pathname.includes('/relatorios')
+        ? 'relatorios'
+        : location.pathname.includes('/categorias')
+          ? 'categorias'
+          : location.pathname.includes('/produtos')
+            ? 'produtos'
+            : location.pathname.includes('/pedidos')
+              ? 'pedidos'
+              : location.pathname.includes('/clientes')
+                ? 'clientes'
+                : 'dashboard'
   const loadOrders = async () => { setOrdersLoading(true); const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }); setOrders(data || []); setOrdersLoading(false) }
-  useEffect(() => { if (['dashboard', 'pedidos', 'clientes'].includes(currentView)) loadOrders() }, [currentView])
+  useEffect(() => {
+    if (['dashboard', 'pedidos', 'clientes', 'relatorios'].includes(currentView)) {
+      loadOrders()
+    }
+  }, [currentView])
 
   const remove = async id => { if (!confirm('Excluir este produto?')) return; const { error } = await supabase.from('products').delete().eq('id', id); if (error) return alert(error.message); reload() }
   const save = async data => { const payload = { name: data.name, category: data.category, price: Number(data.price), stock: Number(data.stock), image: data.image, description: data.description || '', featured: Boolean(data.featured), active: Boolean(data.active) }; const result = data.id ? await supabase.from('products').update(payload).eq('id', data.id) : await supabase.from('products').insert(payload); if (result.error) throw result.error; setModal(false); setEditing(null); reload() }
@@ -772,6 +778,7 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
     categorias: 'Categorias',
     pedidos: 'Pedidos',
     clientes: 'Clientes',
+    relatorios: 'Relatórios',
     configuracoes: 'Configurações'
   }[currentView]
   const now = new Date()
@@ -952,7 +959,7 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
 
   return <div className="admin-shell">
     <button className="admin-mobile-toggle mobile-only" onClick={() => setSidebarOpen(!sidebarOpen)}><Menu /></button>
-    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink><NavLink to="/admin/configuracoes" onClick={() => setSidebarOpen(false)}><Settings /> Configurações</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
+    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink><NavLink to="/admin/relatorios" onClick={() => setSidebarOpen(false)}><FileSpreadsheet /> Relatórios</NavLink><NavLink to="/admin/configuracoes" onClick={() => setSidebarOpen(false)}><Settings /> Configurações</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
     <main className="admin-main"><header><div><span>Painel Administrativo</span><h1>{pageTitle}</h1></div>{currentView === 'produtos' && <button className="primary-btn compact" onClick={() => { setEditing(null); setModal(true) }}><Plus /> Novo produto</button>}{currentView === 'categorias' && <button className="primary-btn compact" onClick={() => { setEditingCategory(null); setCategoryModal(true) }}><Plus /> Nova categoria</button>}</header>
       {currentView === 'dashboard' && <>
         <div className="admin-stats dashboard-stats premium">
@@ -1165,6 +1172,11 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
             </>}
       </section>}
 
+      {currentView === 'relatorios' && <ReportsPanel
+        orders={orders}
+        products={products}
+        loading={ordersLoading}
+      />}
       {currentView === 'configuracoes' && <StoreSettings
         settings={settings}
         onSaved={updatedSettings => {
@@ -1263,6 +1275,362 @@ function Pagination({ page, pages, onChange }) {
   </div>
 }
 
+
+
+function ReportsPanel({ orders, products, loading }) {
+  const today = new Date()
+  const defaultStart = new Date(today.getFullYear(), today.getMonth(), 1)
+    .toISOString()
+    .slice(0, 10)
+  const defaultEnd = today.toISOString().slice(0, 10)
+
+  const [startDate, setStartDate] = useState(defaultStart)
+  const [endDate, setEndDate] = useState(defaultEnd)
+  const [statusFilter, setStatusFilter] = useState('todos')
+
+  const filteredOrders = useMemo(() => {
+    const start = startDate ? new Date(`${startDate}T00:00:00`) : null
+    const end = endDate ? new Date(`${endDate}T23:59:59`) : null
+
+    return orders.filter(order => {
+      const createdAt = new Date(order.created_at)
+      const withinStart = !start || createdAt >= start
+      const withinEnd = !end || createdAt <= end
+      const matchesStatus =
+        statusFilter === 'todos' || order.status === statusFilter
+
+      return withinStart && withinEnd && matchesStatus
+    })
+  }, [orders, startDate, endDate, statusFilter])
+
+  const finalized = filteredOrders.filter(order => order.status === 'finalizado')
+  const openOrders = filteredOrders.filter(order =>
+    ['recebido', 'separacao', 'entrega', 'novo', 'atendimento'].includes(order.status)
+  )
+  const cancelled = filteredOrders.filter(order => order.status === 'cancelado')
+
+  const finalizedRevenue = finalized.reduce(
+    (total, order) => total + Number(order.total || 0),
+    0
+  )
+  const openRevenue = openOrders.reduce(
+    (total, order) => total + Number(order.total || 0),
+    0
+  )
+
+  const averageTicket = finalized.length
+    ? finalizedRevenue / finalized.length
+    : 0
+
+  const productSales = useMemo(() => {
+    const map = new Map()
+
+    filteredOrders
+      .filter(order => order.status !== 'cancelado')
+      .forEach(order => {
+        const items = Array.isArray(order.items) ? order.items : []
+
+        items.forEach(item => {
+          const key = String(item.product_id || item.name)
+          const current = map.get(key) || {
+            name: item.name,
+            quantity: 0,
+            revenue: 0,
+            image: item.image || ''
+          }
+
+          const quantity = Number(item.quantity || 0)
+          const price = Number(item.price || 0)
+
+          current.quantity += quantity
+          current.revenue += quantity * price
+
+          map.set(key, current)
+        })
+      })
+
+    return [...map.values()]
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10)
+  }, [filteredOrders])
+
+  const dailySales = useMemo(() => {
+    const map = new Map()
+
+    filteredOrders.forEach(order => {
+      const key = String(order.created_at || '').slice(0, 10)
+      if (!key) return
+
+      const current = map.get(key) || {
+        date: key,
+        orders: 0,
+        revenue: 0
+      }
+
+      current.orders += 1
+
+      if (order.status === 'finalizado') {
+        current.revenue += Number(order.total || 0)
+      }
+
+      map.set(key, current)
+    })
+
+    return [...map.values()]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-14)
+  }, [filteredOrders])
+
+  const maxDailyRevenue = Math.max(
+    1,
+    ...dailySales.map(item => item.revenue)
+  )
+
+  const exportCsv = () => {
+    const rows = [
+      [
+        'Pedido',
+        'Data',
+        'Cliente',
+        'WhatsApp',
+        'Status',
+        'Entrega',
+        'Pagamento',
+        'Total'
+      ],
+      ...filteredOrders.map(order => [
+        order.order_number,
+        dateTime(order.created_at),
+        order.customer_name,
+        order.phone,
+        ORDER_STATUS[order.status]?.label || order.status,
+        order.delivery_type === 'entrega' ? 'Entrega' : 'Retirada',
+        order.payment_method,
+        Number(order.total || 0).toFixed(2).replace('.', ',')
+      ])
+    ]
+
+    const csv = rows
+      .map(row =>
+        row
+          .map(value => `"${String(value ?? '').replace(/"/g, '""')}"`)
+          .join(';')
+      )
+      .join('\n')
+
+    const blob = new Blob([`\uFEFF${csv}`], {
+      type: 'text/csv;charset=utf-8'
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = `relatorio-bellaten-${startDate || 'inicio'}-${endDate || 'fim'}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return <div className="reports-page">
+    <section className="admin-card reports-filters">
+      <div className="reports-filter-title">
+        <div>
+          <CalendarDays />
+          <span>
+            <h2>Período do relatório</h2>
+            <p>Filtre os dados antes de analisar ou exportar.</p>
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="primary-btn compact"
+          onClick={exportCsv}
+          disabled={!filteredOrders.length}
+        >
+          <Download /> Exportar CSV
+        </button>
+      </div>
+
+      <div className="reports-filter-grid">
+        <label>
+          Data inicial
+          <input
+            type="date"
+            value={startDate}
+            onChange={event => setStartDate(event.target.value)}
+          />
+        </label>
+
+        <label>
+          Data final
+          <input
+            type="date"
+            value={endDate}
+            onChange={event => setEndDate(event.target.value)}
+          />
+        </label>
+
+        <label>
+          Status
+          <select
+            value={statusFilter}
+            onChange={event => setStatusFilter(event.target.value)}
+          >
+            <option value="todos">Todos</option>
+            <option value="recebido">Recebidos</option>
+            <option value="separacao">Em separação</option>
+            <option value="entrega">Saiu para entrega</option>
+            <option value="finalizado">Finalizados</option>
+            <option value="cancelado">Cancelados</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <div className="reports-stats">
+      <article>
+        <span>Pedidos no período</span>
+        <strong>{filteredOrders.length}</strong>
+        <small>{cancelled.length} cancelado(s)</small>
+      </article>
+
+      <article>
+        <span>Faturamento realizado</span>
+        <strong>{money(finalizedRevenue)}</strong>
+        <small>{finalized.length} venda(s) finalizada(s)</small>
+      </article>
+
+      <article>
+        <span>Vendas em aberto</span>
+        <strong>{money(openRevenue)}</strong>
+        <small>{openOrders.length} pedido(s) pendente(s)</small>
+      </article>
+
+      <article>
+        <span>Ticket médio</span>
+        <strong>{money(averageTicket)}</strong>
+        <small>Média das vendas finalizadas</small>
+      </article>
+    </div>
+
+    <section className="reports-grid">
+      <article className="admin-card report-chart-card">
+        <div className="card-title">
+          <div>
+            <h2>Faturamento por dia</h2>
+            <p>Somente pedidos finalizados.</p>
+          </div>
+        </div>
+
+        {dailySales.length
+          ? <div className="reports-bars">
+              {dailySales.map(item => {
+                const height = Math.max(
+                  8,
+                  (item.revenue / maxDailyRevenue) * 100
+                )
+
+                return <div className="reports-bar-item" key={item.date}>
+                  <div className="reports-bar-value">
+                    {money(item.revenue)}
+                  </div>
+                  <div className="reports-bar-track">
+                    <span style={{ height: `${height}%` }} />
+                  </div>
+                  <small>
+                    {new Date(`${item.date}T12:00:00`).toLocaleDateString(
+                      'pt-BR',
+                      { day: '2-digit', month: '2-digit' }
+                    )}
+                  </small>
+                </div>
+              })}
+            </div>
+          : <div className="table-empty">
+              Nenhum pedido encontrado no período.
+            </div>}
+      </article>
+
+      <article className="admin-card report-products-card">
+        <div className="card-title">
+          <div>
+            <h2>Produtos mais vendidos</h2>
+            <p>Ranking por quantidade vendida.</p>
+          </div>
+        </div>
+
+        <div className="report-product-list">
+          {productSales.map((product, index) => <div
+            className="report-product-item"
+            key={`${product.name}-${index}`}
+          >
+            <b>{index + 1}</b>
+            <img
+              src={product.image || 'https://placehold.co/72x72?text=Produto'}
+              alt={product.name}
+            />
+            <span>
+              <strong>{product.name}</strong>
+              <small>{product.quantity} unidade(s)</small>
+            </span>
+            <em>{money(product.revenue)}</em>
+          </div>)}
+
+          {!productSales.length && <div className="table-empty">
+            Nenhuma venda encontrada no período.
+          </div>}
+        </div>
+      </article>
+    </section>
+
+    <section className="admin-card reports-table-card">
+      <div className="card-title">
+        <div>
+          <h2>Pedidos do período</h2>
+          <p>{filteredOrders.length} registro(s) encontrado(s).</p>
+        </div>
+      </div>
+
+      {loading
+        ? <div className="table-empty">Carregando relatório...</div>
+        : <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                  <th>Pagamento</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.map(order => <tr key={order.id}>
+                  <td><strong>#{order.order_number}</strong></td>
+                  <td>
+                    <div className="report-customer-cell">
+                      <strong>{order.customer_name}</strong>
+                      <small>{order.phone}</small>
+                    </div>
+                  </td>
+                  <td>{dateTime(order.created_at)}</td>
+                  <td>
+                    <span className={`order-status ${order.status}`}>
+                      {ORDER_STATUS[order.status]?.label || order.status}
+                    </span>
+                  </td>
+                  <td>{order.payment_method || '—'}</td>
+                  <td><strong>{money(order.total)}</strong></td>
+                </tr>)}
+              </tbody>
+            </table>
+          </div>}
+    </section>
+  </div>
+}
 
 function StoreSettings({ settings, onSaved }) {
   const [form, setForm] = useState({ ...DEFAULT_SETTINGS, ...settings })

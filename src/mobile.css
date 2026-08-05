@@ -2793,3 +2793,78 @@ button:disabled {
     font-size: 11px !important;
   }
 }
+
+
+/* =========================================================
+   CORREÇÃO FINAL — BOTÃO DO CARRINHO NO MOBILE
+   ========================================================= */
+
+.cart-drawer {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.cart-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: 18px !important;
+}
+
+.cart-footer {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding:
+    18px
+    24px
+    calc(24px + env(safe-area-inset-bottom))
+    24px !important;
+  background: #0d0d0d !important;
+  border-top: 1px solid #30262a !important;
+  box-shadow: 0 -14px 30px rgba(0, 0, 0, .42);
+  z-index: 20 !important;
+}
+
+.cart-footer > div {
+  margin-bottom: 16px !important;
+}
+
+.cart-footer .primary-btn,
+.cart-footer .primary-btn.full {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100% !important;
+  min-height: 56px !important;
+  height: auto !important;
+
+  margin: 0 !important;
+  padding: 15px 18px !important;
+
+  border-radius: 14px !important;
+  line-height: 1.2 !important;
+
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+
+@media (max-height: 700px) {
+  .cart-footer {
+    padding-top: 14px !important;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .cart-footer .primary-btn,
+  .cart-footer .primary-btn.full {
+    min-height: 52px !important;
+    padding-block: 13px !important;
+  }
+}

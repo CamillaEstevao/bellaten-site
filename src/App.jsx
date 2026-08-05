@@ -84,7 +84,27 @@ function Storefront({ products, categories, loading, cart, setCart, favorites, s
     return found ? prev.map(i => i.id === product.id ? { ...i, qty: Math.min(i.qty + 1, Number(product.stock)) } : i) : [...prev, { ...product, qty: 1 }]
   })
   const updateQty = (id, delta) => setCart(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(0, Math.min(Number(i.stock), i.qty + delta)) } : i).filter(i => i.qty > 0))
-  const toggleFavorite = id => setFavorites(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id])
+  const toggleFavorite = id => setFavorites(prev =>
+    prev.includes(id)
+      ? prev.filter(item => item !== id)
+      : [...prev, id]
+  )
+
+  const toggleFavoritesView = () => {
+    if (favoritesOnly) {
+      setFavoritesOnly(false)
+      setCategory('Todos')
+    } else {
+      setFavoritesOnly(true)
+    }
+
+    requestAnimationFrame(() => {
+      document.getElementById('produtos')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      })
+    })
+  }
 
   return <div className="site-shell">
     <header className="header">
@@ -93,7 +113,17 @@ function Storefront({ products, categories, loading, cart, setCart, favorites, s
         <Link to="/" className="brand"><img src={logo} alt="BellaTen" /></Link>
         <div className="search-box desktop-search"><Search size={18} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar produtos..." /></div>
         <div className="header-actions">
-          <button className={`header-link favorite-link ${favoritesOnly ? 'active' : ''}`} onClick={() => { setFavoritesOnly(!favoritesOnly); document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' }) }}><Heart size={19} fill={favoritesOnly ? 'currentColor' : 'none'} /><span className="desktop-only">Favoritos</span></button>
+          <button
+            type="button"
+            className={`header-link favorite-link ${favoritesOnly ? 'active' : ''}`}
+            onClick={toggleFavoritesView}
+            aria-pressed={favoritesOnly}
+            aria-label={favoritesOnly ? 'Sair dos favoritos e mostrar todos os produtos' : 'Mostrar produtos favoritos'}
+            title={favoritesOnly ? 'Mostrar todos os produtos' : 'Mostrar favoritos'}
+          >
+            <Heart size={19} fill={favoritesOnly ? 'currentColor' : 'none'} />
+            <span className="desktop-only">Favoritos</span>
+          </button>
           <Link className="header-link desktop-only" to="/admin"><User size={19} /> Entrar</Link>
           <button className="cart-button" onClick={() => setCartOpen(true)}><ShoppingCart size={20} /><span className="desktop-only">Carrinho</span>{qty > 0 && <b>{qty}</b>}</button>
         </div>
@@ -104,12 +134,30 @@ function Storefront({ products, categories, loading, cart, setCart, favorites, s
     <main>
       <section className="hero" id="inicio"><a className="hero-click" href="#produtos" aria-label="Ver produtos"></a></section>
       <section className="benefits"><div className="container benefits-grid"><Benefit icon={<CircleDollarSign />} title="Preços acessíveis" text="Produtos para todos os bolsos" /><Benefit icon={<ShieldCheck />} title="Qualidade garantida" text="Produtos escolhidos com carinho" /><Benefit icon={<Truck />} title="Entrega rápida" text="Combine diretamente pelo WhatsApp" /><Benefit icon={<LockKeyhole />} title="Compra segura" text="Pedido confirmado com a vendedora" /></div></section>
-      <section className="section container" id="categorias"><div className="section-heading"><span>Explore</span><h2>Categorias</h2><p>Encontre tudo o que você precisa</p></div><div className="categories-grid">{categories.filter(c => c.active !== false).map(c => <button key={c.id || c.name} className={category === c.name ? 'category active' : 'category'} onClick={() => { setCategory(c.name); setFavoritesOnly(false); document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' }) }}><img src={c.image || 'https://placehold.co/500x500?text=Categoria'} alt={c.name} /><strong>{c.name}</strong></button>)}<button className="category" onClick={() => { setCategory('Todos'); setFavoritesOnly(false) }}><span className="category-more">•••</span><strong>Todos</strong></button></div></section>
+      {!favoritesOnly && <section className="section container" id="categorias"><div className="section-heading"><span>Explore</span><h2>Categorias</h2><p>Encontre tudo o que você precisa</p></div><div className="categories-grid">{categories.filter(c => c.active !== false).map(c => <button key={c.id || c.name} className={category === c.name ? 'category active' : 'category'} onClick={() => { setCategory(c.name); setFavoritesOnly(false); document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' }) }}><img src={c.image || 'https://placehold.co/500x500?text=Categoria'} alt={c.name} /><strong>{c.name}</strong></button>)}<button className="category" onClick={() => { setCategory('Todos'); setFavoritesOnly(false) }}><span className="category-more">•••</span><strong>Todos</strong></button></div></section>}
 
       <section className="section products-section" id="produtos"><div className="container">
-        <div className="section-heading"><span>Catálogo</span><h2>{favoritesOnly ? 'Seus favoritos' : category === 'Todos' ? 'Nossos produtos' : category}</h2><p>{favoritesOnly ? 'Os produtos que você salvou' : 'Escolha seus favoritos'}</p></div>
+        <div className="section-heading">
+          <span>Catálogo</span>
+          <h2>{favoritesOnly ? 'Seus favoritos' : category === 'Todos' ? 'Nossos produtos' : category}</h2>
+          <p>{favoritesOnly ? 'Os produtos que você salvou' : 'Escolha seus favoritos'}</p>
+
+          {favoritesOnly && <button
+            type="button"
+            className="favorites-back-button"
+            onClick={() => {
+              setFavoritesOnly(false)
+              setCategory('Todos')
+            }}
+          >
+            <ChevronRight />
+            Ver todos os produtos
+          </button>}
+        </div>
         <div className="catalog-toolbar"><div className="mobile-search"><Search size={18} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar produtos..." /></div><label className="sort-control"><ArrowUpDown size={17} /><select value={sort} onChange={e => setSort(e.target.value)}><option value="recentes">Mais recentes</option><option value="menor">Menor preço</option><option value="maior">Maior preço</option><option value="nome">Nome A–Z</option></select></label></div>
-        {loading ? <div className="empty">Carregando produtos...</div> : <><div className="products-grid">{filtered.map(p => <ProductCard key={p.id} product={p} favorite={favorites.includes(p.id)} onFavorite={() => toggleFavorite(p.id)} onAdd={() => addToCart(p)} onView={() => setSelectedProduct(p)} />)}</div>{!filtered.length && <div className="empty">Nenhum produto encontrado.</div>}</>}
+        {loading ? <div className="empty">Carregando produtos...</div> : <><div className="products-grid">{filtered.map(p => <ProductCard key={p.id} product={p} favorite={favorites.includes(p.id)} onFavorite={() => toggleFavorite(p.id)} onAdd={() => addToCart(p)} onView={() => setSelectedProduct(p)} />)}</div>{!filtered.length && <div className="empty">
+          {favoritesOnly ? 'Você ainda não adicionou produtos aos favoritos.' : 'Nenhum produto encontrado.'}
+        </div>}</>}
       </div></section>
       <section className="brand-section" id="sobre"><div className="container brand-panel"><div className="brand-copy"><span className="eyebrow">O universo BellaTen</span><h2>Beleza que combina com você</h2><p>Produtos escolhidos para deixar sua rotina mais bonita, prática e acessível.</p><a className="primary-btn" href="#produtos">Ver produtos</a></div><div className="brand-highlights"><div><Sparkles /><strong>Novidades</strong><span>Achadinhos para renovar sua nécessaire.</span></div><div><Gift /><strong>Para presentear</strong><span>Monte kits lindos e especiais.</span></div><div><Heart /><strong>Com carinho</strong><span>Produtos para todos os estilos.</span></div></div></div></section>
     </main>

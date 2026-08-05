@@ -2441,3 +2441,47 @@ button:disabled {
   min-height: 96px;
   resize: vertical;
 }
+
+
+/* Estado ativo do filtro de favoritos */
+.favorite-link.active {
+  color: var(--pink2) !important;
+}
+
+.favorite-link.active svg {
+  color: var(--pink2) !important;
+}
+
+
+/* Navegação de saída da tela de favoritos */
+.favorites-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin-top: 20px;
+  padding: 11px 17px;
+
+  color: #f7d5df;
+  background: #21171b;
+  border: 1px solid #5b3542;
+  border-radius: 999px;
+
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.favorites-back-button svg {
+  width: 17px;
+  height: 17px;
+  transform: rotate(180deg);
+}
+
+.favorites-back-button:hover {
+  color: #fff;
+  background: #b94369;
+  border-color: #e887a7;
+  transform: translateY(-1px);
+}

@@ -3109,3 +3109,41 @@ button:disabled {
     height: 52px !important;
   }
 }
+
+
+/* Estado ativo do filtro de favoritos no mobile */
+.favorite-link.active {
+  color: var(--pink2) !important;
+}
+
+.favorite-link.active svg {
+  color: var(--pink2) !important;
+  filter: drop-shadow(0 0 7px rgba(246, 162, 185, .45));
+}
+
+
+/* Saída clara da tela de favoritos no mobile */
+.favorites-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  width: auto;
+  min-height: 44px;
+  margin-top: 18px;
+  padding: 10px 15px;
+
+  color: #f7d5df;
+  background: #21171b;
+  border: 1px solid #5b3542;
+  border-radius: 999px;
+
+  font: 600 12px var(--font-body);
+}
+
+.favorites-back-button svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(180deg);
+}

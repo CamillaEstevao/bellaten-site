@@ -2959,3 +2959,85 @@ button:disabled {
   min-height: 54px;
   margin-top: 8px;
 }
+
+
+/* =========================================================
+   CORREÇÃO FINAL — CARRINHO ACIMA DO CABEÇALHO NO MOBILE
+   ========================================================= */
+
+.drawer-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9998 !important;
+  background: rgba(0, 0, 0, .78) !important;
+  isolation: isolate;
+}
+
+.cart-drawer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  padding: 0 16px !important;
+  background: #0d0d0d !important;
+}
+
+.cart-drawer .drawer-title {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10001 !important;
+  width: calc(100% + 32px) !important;
+  min-height: 78px !important;
+  margin: 0 -16px 18px !important;
+  padding: 15px 72px 13px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  background: rgba(10, 10, 10, .99) !important;
+  border-bottom: 1px solid #34252b !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+}
+
+.cart-drawer .drawer-title > div {
+  min-width: 0;
+}
+
+.cart-drawer .drawer-title small {
+  display: block !important;
+  margin-bottom: 2px;
+  color: #cbbbc0;
+  font-size: 12px;
+}
+
+.cart-drawer .drawer-title h2 {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
+}
+
+.cart-drawer .drawer-title button {
+  position: absolute !important;
+  top: 50% !important;
+  right: 16px !important;
+  transform: translateY(-50%) !important;
+  z-index: 10002 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 46px !important;
+  height: 46px !important;
+  padding: 0 !important;
+  color: #fff !important;
+  background: #2b1c22 !important;
+  border: 1px solid #724255 !important;
+  border-radius: 50% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.cart-list {
+  padding-top: 0 !important;
+}

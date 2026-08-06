@@ -5,7 +5,7 @@ import {
   Plus, Pencil, Trash2, Package, LayoutDashboard, Tags, LogOut, Minus, MessageCircle,
   Sparkles, Gift, Heart, Upload, LoaderCircle, ImagePlus, ClipboardList, Users, ChevronRight,
   MapPin, Store, CheckCircle2, Clock3, Ban, Eye, Phone, Mail, TrendingUp,
-  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard, FileSpreadsheet, Download, CalendarDays, TicketPercent, Power, Copy, ExternalLink, RefreshCw
+  AlertTriangle, ArrowUpDown, Settings, Save, Palette, Globe2, CreditCard, FileSpreadsheet, Download, CalendarDays, TicketPercent, Power, Copy, ExternalLink, RefreshCw, Boxes, ArrowDownToLine, ArrowUpFromLine, History
 } from 'lucide-react'
 import logo from './assets/logo-bellaten-cropped.png'
 import { categories as fallbackCategories } from './data'
@@ -1072,15 +1072,23 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
   const [couponsLoading, setCouponsLoading] = useState(false)
   const [couponModal, setCouponModal] = useState(false)
   const [editingCoupon, setEditingCoupon] = useState(null)
+
+  const [stockMovements, setStockMovements] = useState([])
+  const [stockLoading, setStockLoading] = useState(false)
+  const [stockModal, setStockModal] = useState(false)
+  const [stockProduct, setStockProduct] = useState(null)
+  const [stockQuery, setStockQuery] = useState('')
   const navigate = useNavigate(), location = useLocation()
   const currentView =
     location.pathname.includes('/configuracoes')
       ? 'configuracoes'
-      : location.pathname.includes('/cupons')
-        ? 'cupons'
-        : location.pathname.includes('/relatorios')
-          ? 'relatorios'
-          : location.pathname.includes('/categorias')
+      : location.pathname.includes('/estoque')
+        ? 'estoque'
+        : location.pathname.includes('/cupons')
+          ? 'cupons'
+          : location.pathname.includes('/relatorios')
+            ? 'relatorios'
+            : location.pathname.includes('/categorias')
           ? 'categorias'
           : location.pathname.includes('/produtos')
             ? 'produtos'
@@ -1117,6 +1125,26 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
 
     setCouponsLoading(false)
   }
+
+  const loadStockMovements = async () => {
+    setStockLoading(true)
+
+    try {
+      const { data, error } = await supabase.rpc(
+        'get_stock_movements',
+        { movement_limit_input: 300 }
+      )
+
+      if (error) throw error
+
+      setStockMovements(Array.isArray(data) ? data : [])
+    } catch (loadError) {
+      console.error('Erro ao carregar movimentações:', loadError)
+      setStockMovements([])
+    } finally {
+      setStockLoading(false)
+    }
+  }
   useEffect(() => {
     if (['dashboard', 'pedidos', 'clientes', 'relatorios'].includes(currentView)) {
       loadOrders()
@@ -1126,6 +1154,12 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
   useEffect(() => {
     if (currentView === 'cupons') {
       loadCoupons()
+    }
+  }, [currentView])
+
+  useEffect(() => {
+    if (currentView === 'estoque') {
+      loadStockMovements()
     }
   }, [currentView])
 
@@ -1152,6 +1186,21 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
       previous ? { ...previous, status } : previous
     )
   }
+  const saveStockAdjustment = async form => {
+    const { error } = await supabase.rpc('adjust_product_stock', {
+      product_id_input: Number(form.product_id),
+      movement_type_input: form.movement_type,
+      quantity_input: Number(form.quantity),
+      reason_input: form.reason.trim()
+    })
+
+    if (error) throw error
+
+    setStockModal(false)
+    setStockProduct(null)
+    await Promise.all([reload(), loadStockMovements()])
+  }
+
   const saveCoupon = async form => {
     const payload = {
       code: form.code.trim().toUpperCase(),
@@ -1218,6 +1267,7 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
     pedidos: 'Pedidos',
     clientes: 'Clientes',
     relatorios: 'Relatórios',
+    estoque: 'Estoque',
     cupons: 'Cupons',
     configuracoes: 'Configurações'
   }[currentView]
@@ -1399,8 +1449,8 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
 
   return <div className="admin-shell">
     <button className="admin-mobile-toggle mobile-only" onClick={() => setSidebarOpen(!sidebarOpen)}><Menu /></button>
-    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink><NavLink to="/admin/relatorios" onClick={() => setSidebarOpen(false)}><FileSpreadsheet /> Relatórios</NavLink><NavLink to="/admin/cupons" onClick={() => setSidebarOpen(false)}><TicketPercent /> Cupons</NavLink><NavLink to="/admin/configuracoes" onClick={() => setSidebarOpen(false)}><Settings /> Configurações</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
-    <main className="admin-main"><header><div><span>Painel Administrativo</span><h1>{pageTitle}</h1></div>{currentView === 'produtos' && <button className="primary-btn compact" onClick={() => { setEditing(null); setModal(true) }}><Plus /> Novo produto</button>}{currentView === 'categorias' && <button className="primary-btn compact" onClick={() => { setEditingCategory(null); setCategoryModal(true) }}><Plus /> Nova categoria</button>}{currentView === 'cupons' && <button className="primary-btn compact" onClick={() => { setEditingCoupon(null); setCouponModal(true) }}><Plus /> Novo cupom</button>}</header>
+    <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="admin-logo-row"><img src={logo} /><button className="mobile-only" onClick={() => setSidebarOpen(false)}><X /></button></div><nav><NavLink to="/admin" end onClick={() => setSidebarOpen(false)}><LayoutDashboard /> Dashboard</NavLink><NavLink to="/admin/produtos" onClick={() => setSidebarOpen(false)}><Package /> Produtos</NavLink><NavLink to="/admin/categorias" onClick={() => setSidebarOpen(false)}><Tags /> Categorias</NavLink><NavLink to="/admin/pedidos" onClick={() => setSidebarOpen(false)}><ClipboardList /> Pedidos</NavLink><NavLink to="/admin/clientes" onClick={() => setSidebarOpen(false)}><Users /> Clientes</NavLink><NavLink to="/admin/relatorios" onClick={() => setSidebarOpen(false)}><FileSpreadsheet /> Relatórios</NavLink><NavLink to="/admin/estoque" onClick={() => setSidebarOpen(false)}><Boxes /> Estoque</NavLink><NavLink to="/admin/cupons" onClick={() => setSidebarOpen(false)}><TicketPercent /> Cupons</NavLink><NavLink to="/admin/configuracoes" onClick={() => setSidebarOpen(false)}><Settings /> Configurações</NavLink></nav><button onClick={logout}><LogOut /> Sair</button></aside>
+    <main className="admin-main"><header><div><span>Painel Administrativo</span><h1>{pageTitle}</h1></div>{currentView === 'produtos' && <button className="primary-btn compact" onClick={() => { setEditing(null); setModal(true) }}><Plus /> Novo produto</button>}{currentView === 'categorias' && <button className="primary-btn compact" onClick={() => { setEditingCategory(null); setCategoryModal(true) }}><Plus /> Nova categoria</button>}{currentView === 'estoque' && <button className="primary-btn compact" onClick={() => { setStockProduct(null); setStockModal(true) }}><Plus /> Ajustar estoque</button>}{currentView === 'cupons' && <button className="primary-btn compact" onClick={() => { setEditingCoupon(null); setCouponModal(true) }}><Plus /> Novo cupom</button>}</header>
       {currentView === 'dashboard' && <>
         <div className="admin-stats dashboard-stats premium">
           <div><span>Faturamento hoje</span><strong>{money(revenueToday)}</strong><TrendingUp /></div>
@@ -1612,6 +1662,18 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
             </>}
       </section>}
 
+      {currentView === 'estoque' && <StockPanel
+        products={products}
+        movements={stockMovements}
+        loading={stockLoading}
+        query={stockQuery}
+        setQuery={setStockQuery}
+        onAdjust={product => {
+          setStockProduct(product)
+          setStockModal(true)
+        }}
+      />}
+
       {currentView === 'cupons' && <CouponsPanel
         coupons={coupons}
         loading={couponsLoading}
@@ -1681,7 +1743,7 @@ function AdminPanel({ products, categories, settings, setSettings, reload }) {
         <Pagination page={customerPage} pages={customerPages} onChange={setCustomerPage} />
       </section>}
     </main>
-    {modal && <ProductModal product={editing} categories={categories} onClose={() => { setModal(false); setEditing(null) }} onSave={save} />} {categoryModal && <CategoryModal category={editingCategory} onClose={() => { setCategoryModal(false); setEditingCategory(null) }} onSave={saveCategory} />} {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedOrder(null)} onStatus={updateOrderStatus} />} {couponModal && <CouponModal coupon={editingCoupon} onClose={() => { setCouponModal(false); setEditingCoupon(null) }} onSave={saveCoupon} />}
+    {modal && <ProductModal product={editing} categories={categories} onClose={() => { setModal(false); setEditing(null) }} onSave={save} />} {categoryModal && <CategoryModal category={editingCategory} onClose={() => { setCategoryModal(false); setEditingCategory(null) }} onSave={saveCategory} />} {selectedOrder && <OrderDetails order={selectedOrder} onClose={() => setSelectedOrder(null)} onStatus={updateOrderStatus} />} {stockModal && <StockAdjustmentModal products={products} product={stockProduct} onClose={() => { setStockModal(false); setStockProduct(null) }} onSave={saveStockAdjustment} />} {couponModal && <CouponModal coupon={editingCoupon} onClose={() => { setCouponModal(false); setEditingCoupon(null) }} onSave={saveCoupon} />}
   </div>
 }
 
@@ -1732,6 +1794,301 @@ function Pagination({ page, pages, onChange }) {
 
 
 
+
+
+function StockPanel({
+  products,
+  movements,
+  loading,
+  query,
+  setQuery,
+  onAdjust
+}) {
+  const normalizedQuery = query.trim().toLowerCase()
+
+  const filteredProducts = products
+    .filter(product =>
+      String(product.name || '').toLowerCase().includes(normalizedQuery) ||
+      String(product.category || '').toLowerCase().includes(normalizedQuery)
+    )
+    .sort((a, b) => Number(a.stock) - Number(b.stock))
+
+  const totalUnits = products.reduce(
+    (total, product) => total + Number(product.stock || 0),
+    0
+  )
+  const lowStock = products.filter(product => Number(product.stock) < 10).length
+  const outOfStock = products.filter(product => Number(product.stock) <= 0).length
+
+  return <div className="stock-page">
+    <div className="admin-stats stock-stats">
+      <div><span>Produtos cadastrados</span><strong>{products.length}</strong><Package /></div>
+      <div><span>Unidades em estoque</span><strong>{totalUnits}</strong><Boxes /></div>
+      <div><span>Estoque baixo</span><strong>{lowStock}</strong><AlertTriangle /></div>
+      <div><span>Sem estoque</span><strong>{outOfStock}</strong><Ban /></div>
+    </div>
+
+    <section className="admin-card stock-products-card">
+      <div className="stock-toolbar">
+        <div>
+          <h2>Posição de estoque</h2>
+          <p>Acompanhe as quantidades e faça ajustes manuais.</p>
+        </div>
+
+        <div className="search-box">
+          <Search />
+          <input
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="Buscar produto ou categoria..."
+          />
+        </div>
+      </div>
+
+      <div className="stock-product-grid">
+        {filteredProducts.map(product => {
+          const stock = Number(product.stock || 0)
+          const status =
+            stock <= 0
+              ? { label: 'Sem estoque', className: 'out' }
+              : stock < 10
+                ? { label: 'Estoque baixo', className: 'low' }
+                : { label: 'Disponível', className: 'ok' }
+
+          return <article className="stock-product-card" key={product.id}>
+            <img
+              src={product.image || 'https://placehold.co/100x100?text=Produto'}
+              alt={product.name}
+            />
+
+            <div className="stock-product-copy">
+              <small>{product.category}</small>
+              <strong>{product.name}</strong>
+              <span className={`stock-badge ${status.className}`}>
+                {status.label}
+              </span>
+            </div>
+
+            <div className="stock-product-quantity">
+              <small>Quantidade</small>
+              <strong>{stock}</strong>
+            </div>
+
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={() => onAdjust(product)}
+            >
+              <Boxes /> Ajustar
+            </button>
+          </article>
+        })}
+
+        {!filteredProducts.length && <div className="table-empty">
+          Nenhum produto encontrado.
+        </div>}
+      </div>
+    </section>
+
+    <section className="admin-card stock-history-card">
+      <div className="card-title">
+        <div>
+          <h2>Histórico de movimentações</h2>
+          <p>Entradas, saídas e vendas registradas.</p>
+        </div>
+        <History />
+      </div>
+
+      {loading
+        ? <div className="table-empty">Carregando movimentações...</div>
+        : <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Produto</th>
+                  <th>Tipo</th>
+                  <th>Quantidade</th>
+                  <th>Antes</th>
+                  <th>Depois</th>
+                  <th>Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements.map(movement => <tr key={movement.id}>
+                  <td>{dateTime(movement.created_at)}</td>
+                  <td>
+                    <div className="stock-history-product">
+                      <strong>{movement.product_name}</strong>
+                      <small>#{movement.product_id}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`movement-type ${movement.movement_type}`}>
+                      {movement.movement_type === 'entrada'
+                        ? 'Entrada'
+                        : movement.movement_type === 'saida'
+                          ? 'Saída'
+                          : 'Venda'}
+                    </span>
+                  </td>
+                  <td>
+                    <strong className={movement.quantity > 0 ? 'positive' : 'negative'}>
+                      {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                    </strong>
+                  </td>
+                  <td>{movement.stock_before}</td>
+                  <td>{movement.stock_after}</td>
+                  <td>{movement.reason || '—'}</td>
+                </tr>)}
+              </tbody>
+            </table>
+
+            {!movements.length && <div className="table-empty stock-history-empty">
+              <History />
+              <strong>Nenhuma movimentação registrada.</strong>
+              <span>
+                O histórico começa a registrar entradas, saídas e vendas
+                depois que o módulo de estoque é instalado.
+              </span>
+            </div>}
+          </div>}
+    </section>
+  </div>
+}
+
+function StockAdjustmentModal({ products, product, onClose, onSave }) {
+  const [form, setForm] = useState({
+    product_id: product?.id || products[0]?.id || '',
+    movement_type: 'entrada',
+    quantity: 1,
+    reason: ''
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const selectedProduct = products.find(
+    item => Number(item.id) === Number(form.product_id)
+  )
+
+  const update = (key, value) => {
+    setForm(previous => ({ ...previous, [key]: value }))
+    setError('')
+  }
+
+  const submit = async event => {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+
+    try {
+      if (!form.product_id) {
+        throw new Error('Selecione um produto.')
+      }
+
+      if (Number(form.quantity) <= 0) {
+        throw new Error('A quantidade deve ser maior que zero.')
+      }
+
+      await onSave(form)
+    } catch (saveError) {
+      setError(saveError.message || 'Não foi possível ajustar o estoque.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <div className="modal-backdrop">
+    <form className="modal stock-adjustment-modal" onSubmit={submit}>
+      <div className="drawer-title">
+        <div>
+          <small>Controle de estoque</small>
+          <h2>Ajustar quantidade</h2>
+        </div>
+        <button type="button" onClick={onClose}><X /></button>
+      </div>
+
+      <label>
+        Produto
+        <select
+          value={form.product_id}
+          onChange={event => update('product_id', event.target.value)}
+        >
+          {products.map(item => <option key={item.id} value={item.id}>
+            {item.name} — estoque atual: {item.stock}
+          </option>)}
+        </select>
+      </label>
+
+      {selectedProduct && <div className="stock-selected-product">
+        <img
+          src={selectedProduct.image || 'https://placehold.co/90x90?text=Produto'}
+          alt={selectedProduct.name}
+        />
+        <span>
+          <small>Estoque atual</small>
+          <strong>{selectedProduct.stock} unidade(s)</strong>
+        </span>
+      </div>}
+
+      <div className="stock-movement-choice">
+        <button
+          type="button"
+          className={form.movement_type === 'entrada' ? 'active' : ''}
+          onClick={() => update('movement_type', 'entrada')}
+        >
+          <ArrowDownToLine />
+          <span>
+            <strong>Entrada</strong>
+            <small>Adicionar unidades</small>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={form.movement_type === 'saida' ? 'active' : ''}
+          onClick={() => update('movement_type', 'saida')}
+        >
+          <ArrowUpFromLine />
+          <span>
+            <strong>Saída</strong>
+            <small>Remover unidades</small>
+          </span>
+        </button>
+      </div>
+
+      <label>
+        Quantidade
+        <input
+          required
+          type="number"
+          min="1"
+          step="1"
+          value={form.quantity}
+          onChange={event => update('quantity', event.target.value)}
+        />
+      </label>
+
+      <label>
+        Motivo
+        <textarea
+          required
+          value={form.reason}
+          onChange={event => update('reason', event.target.value)}
+          placeholder="Ex.: compra de fornecedor, produto danificado, correção de inventário..."
+        />
+      </label>
+
+      {error && <p className="form-error">{error}</p>}
+
+      <button className="primary-btn full" disabled={saving}>
+        {saving
+          ? <><LoaderCircle className="spin" /> Salvando...</>
+          : 'Confirmar ajuste'}
+      </button>
+    </form>
+  </div>
+}
 
 function CouponsPanel({
   coupons,

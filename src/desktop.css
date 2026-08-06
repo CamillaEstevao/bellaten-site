@@ -3904,3 +3904,277 @@ button:disabled {
 .order-tracking-actions svg {
   width: 15px;
 }
+
+
+/* =========================================================
+   ESTOQUE E MOVIMENTAÇÕES — DESKTOP
+   ========================================================= */
+
+.stock-page {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-stats.stock-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.stock-products-card,
+.stock-history-card {
+  overflow: hidden;
+}
+
+.stock-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  border-bottom: 1px solid #2a2426;
+}
+
+.stock-toolbar h2,
+.stock-toolbar p {
+  margin: 0;
+}
+
+.stock-toolbar p {
+  margin-top: 5px;
+  color: #91878b;
+  font-size: 12px;
+}
+
+.stock-toolbar .search-box {
+  max-width: 360px;
+}
+
+.stock-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+
+.stock-product-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 84px auto;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  background: #111;
+  border: 1px solid #2d282a;
+  border-radius: 14px;
+}
+
+.stock-product-card > img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 11px;
+}
+
+.stock-product-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stock-product-copy > small {
+  color: #8e8488;
+  font-size: 10px;
+}
+
+.stock-product-copy > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-badge {
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.stock-badge.ok {
+  color: #8de0a5;
+  background: #15321f;
+}
+
+.stock-badge.low {
+  color: #f4c972;
+  background: #332711;
+}
+
+.stock-badge.out {
+  color: #ff8fa4;
+  background: #38191f;
+}
+
+.stock-product-quantity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.stock-product-quantity small {
+  color: #8e8488;
+  font-size: 9px;
+}
+
+.stock-product-quantity strong {
+  color: var(--pink2);
+  font-size: 24px;
+}
+
+.stock-product-card .secondary-btn {
+  min-height: 40px;
+}
+
+.stock-history-card .card-title {
+  padding: 20px;
+  border-bottom: 1px solid #2a2426;
+}
+
+.stock-history-product {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stock-history-product small {
+  color: #8d8387;
+}
+
+.movement-type {
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.movement-type.entrada {
+  color: #8de0a5;
+  background: #15321f;
+}
+
+.movement-type.saida {
+  color: #f4c972;
+  background: #332711;
+}
+
+.movement-type.venda {
+  color: #f4b3c5;
+  background: #351924;
+}
+
+.positive {
+  color: #8de0a5;
+}
+
+.negative {
+  color: #ff8fa4;
+}
+
+.stock-adjustment-modal {
+  width: min(560px, 100%);
+}
+
+.stock-selected-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #101010;
+  border: 1px solid #2f292b;
+  border-radius: 12px;
+}
+
+.stock-selected-product img {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.stock-selected-product span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stock-selected-product small {
+  color: #91878b;
+}
+
+.stock-movement-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.stock-movement-choice button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px;
+  color: #d9cdd1;
+  background: #111;
+  border: 1px solid #30292c;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stock-movement-choice button.active {
+  color: #fff;
+  background: #2a1820;
+  border-color: #a74866;
+}
+
+.stock-movement-choice button svg {
+  color: var(--pink2);
+}
+
+.stock-movement-choice span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stock-movement-choice small {
+  color: #8e8488;
+}
+
+
+.stock-history-empty {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.stock-history-empty svg {
+  width: 30px;
+  height: 30px;
+  color: var(--pink2);
+}
+
+.stock-history-empty strong {
+  color: #f2e5e9;
+}
+
+.stock-history-empty span {
+  max-width: 520px;
+  color: #91878b;
+  font-size: 12px;
+  line-height: 1.5;
+}

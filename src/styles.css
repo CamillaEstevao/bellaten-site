@@ -1,0 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Montserrat:wght@400;500;600;700&display=swap");
+
+@import "./desktop.css" screen and (min-width: 901px);
+@import "./mobile.css" screen and (max-width: 900px);

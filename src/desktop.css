@@ -1229,7 +1229,7 @@ button {
   animation: bt-spin .9s linear infinite;
 }
 
-@keyframes bt-spin{
+@keyframes bt-spin {
   to {
     transform: rotate(360deg);
   }
@@ -2129,7 +2129,7 @@ button:disabled {
 .admin-card .card-title h2,
 .categories-admin-header h2 {
   margin: 0 0 6px;
-  font-family: var(--font-title);
+  font-family: 'Montserrat';
   font-size: 30px;
   line-height: 1;
 }
@@ -2526,7 +2526,7 @@ button:disabled {
   gap: 16px;
 }
 
-.admin-stats.dashboard-stats.premium > div {
+.admin-stats.dashboard-stats.premium>div {
   position: relative;
   min-height: 126px;
   overflow: hidden;
@@ -2535,7 +2535,7 @@ button:disabled {
     linear-gradient(145deg, #171516, #111);
 }
 
-.admin-stats.dashboard-stats.premium > div::after {
+.admin-stats.dashboard-stats.premium>div::after {
   content: "";
   position: absolute;
   right: -28px;
@@ -2613,7 +2613,7 @@ button:disabled {
   transition: height .35s ease;
 }
 
-.sales-bar-column > span {
+.sales-bar-column>span {
   font-size: 11px;
   font-weight: 600;
   text-transform: capitalize;
@@ -2626,7 +2626,7 @@ button:disabled {
   padding: 4px 18px 18px;
 }
 
-.top-products-list > div {
+.top-products-list>div {
   display: grid;
   grid-template-columns: 30px 46px minmax(0, 1fr) auto;
   gap: 11px;
@@ -2635,7 +2635,7 @@ button:disabled {
   border-bottom: 1px solid #252023;
 }
 
-.top-products-list > div:last-child {
+.top-products-list>div:last-child {
   border-bottom: 0;
 }
 
@@ -2696,7 +2696,7 @@ button:disabled {
   max-width: none;
 }
 
-.premium-toolbar > select,
+.premium-toolbar>select,
 .status-select {
   min-height: 44px;
   padding: 0 36px 0 13px;
@@ -2871,7 +2871,7 @@ button:disabled {
   border-bottom: 1px solid #2b2527;
 }
 
-.settings-section-title > div {
+.settings-section-title>div {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -3005,7 +3005,7 @@ button:disabled {
   width: 18px;
 }
 
-.color-field > span {
+.color-field>span {
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: 10px;
@@ -3121,7 +3121,7 @@ button:disabled {
   border-bottom: 1px solid #2b2527;
 }
 
-.reports-filter-title > div {
+.reports-filter-title>div {
   display: flex;
   align-items: center;
   gap: 13px;
@@ -3276,7 +3276,7 @@ button:disabled {
   border-radius: 11px;
 }
 
-.report-product-item > b {
+.report-product-item>b {
   color: var(--pink2);
   text-align: center;
 }
@@ -3343,7 +3343,7 @@ button:disabled {
   gap: 10px;
 }
 
-.coupon-title > svg {
+.coupon-title>svg {
   color: var(--pink2);
 }
 
@@ -3407,13 +3407,13 @@ button:disabled {
   padding-top: 6px;
 }
 
-.checkout-summary > div {
+.checkout-summary>div {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.checkout-summary > div:not(.checkout-total) {
+.checkout-summary>div:not(.checkout-total) {
   color: #a69ba0;
   font-size: 13px;
 }
@@ -3517,7 +3517,7 @@ button:disabled {
   font-size: 17px;
 }
 
-.coupon-admin-card > p {
+.coupon-admin-card>p {
   min-height: 38px;
   margin: 0 0 16px;
   color: #988e92;
@@ -3565,7 +3565,7 @@ button:disabled {
   text-align: center;
 }
 
-.coupons-empty > svg {
+.coupons-empty>svg {
   width: 42px;
   height: 42px;
   color: var(--pink2);
@@ -3610,7 +3610,7 @@ button:disabled {
   object-fit: contain;
 }
 
-.tracking-header > a:last-child {
+.tracking-header>a:last-child {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3636,7 +3636,7 @@ button:disabled {
   text-align: center;
 }
 
-.tracking-state > svg {
+.tracking-state>svg {
   width: 44px;
   height: 44px;
   color: var(--pink2);
@@ -3647,7 +3647,7 @@ button:disabled {
   margin: 0;
 }
 
-.tracking-state.error > svg {
+.tracking-state.error>svg {
   color: #ff7189;
 }
 
@@ -3801,7 +3801,7 @@ button:disabled {
   display: grid;
 }
 
-.tracking-items > div {
+.tracking-items>div {
   display: grid;
   grid-template-columns: 54px minmax(0, 1fr) auto;
   align-items: center;
@@ -3861,7 +3861,7 @@ button:disabled {
   margin: 0;
 }
 
-.tracking-info > div {
+.tracking-info>div {
   display: grid;
   gap: 5px;
   padding: 13px 0;
@@ -3966,7 +3966,7 @@ button:disabled {
   border-radius: 14px;
 }
 
-.stock-product-card > img {
+.stock-product-card>img {
   width: 64px;
   height: 64px;
   object-fit: cover;
@@ -3980,12 +3980,12 @@ button:disabled {
   gap: 4px;
 }
 
-.stock-product-copy > small {
+.stock-product-copy>small {
   color: #8e8488;
   font-size: 10px;
 }
 
-.stock-product-copy > strong {
+.stock-product-copy>strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4188,7 +4188,7 @@ button:disabled {
   filter: grayscale(.45) brightness(.72);
 }
 
-.product-card.out-of-stock .product-info > div button {
+.product-card.out-of-stock .product-info>div button {
   cursor: not-allowed;
   opacity: .45;
 }
@@ -4235,7 +4235,7 @@ button:disabled {
   object-fit: contain;
 }
 
-.legal-header > a:last-child {
+.legal-header>a:last-child {
   color: #f2d6de;
 }
 
@@ -4248,7 +4248,7 @@ button:disabled {
   border-radius: 20px;
 }
 
-.legal-card > span {
+.legal-card>span {
   color: var(--pink2);
   font-size: 11px;
   letter-spacing: .16em;
@@ -4284,8 +4284,8 @@ button:disabled {
   text-align: center;
 }
 
-.not-found-page > div,
-.fatal-error-page > div {
+.not-found-page>div,
+.fatal-error-page>div {
   width: min(520px, 100%);
   display: grid;
   justify-items: center;
@@ -4302,7 +4302,7 @@ button:disabled {
   object-fit: contain;
 }
 
-.not-found-page > div > strong {
+.not-found-page>div>strong {
   color: var(--pink2);
   font-family: var(--font-title);
   font-size: 80px;
@@ -4376,6 +4376,7 @@ button:disabled {
   color: #f7d6e0;
   transform: translateY(-1px);
 }
+
 /* =========================================
    FIX — BOTÃO SAIR SEMPRE VISÍVEL
    ========================================= */
@@ -4408,7 +4409,7 @@ button:disabled {
   border-radius: 999px;
 }
 
-.admin-sidebar > button {
+.admin-sidebar>button {
   flex-shrink: 0;
   margin-top: 12px !important;
   padding: 13px 12px;
@@ -4417,7 +4418,12 @@ button:disabled {
   color: #b9adb2;
 }
 
-.admin-sidebar > button:hover {
+.admin-sidebar>button:hover {
   color: #ff7da1;
   background: #261a1f;
+}
+
+.categories-admin-header {
+  padding: 15px;
+  font-family: 'Montserrat';
 }

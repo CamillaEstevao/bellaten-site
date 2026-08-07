@@ -1444,8 +1444,8 @@ button {
 
 .modal-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 58px;
+  right: 5px;
   z-index: 4;
   border: 0;
   background: #111b;
@@ -2476,8 +2476,8 @@ button:disabled {
   display: grid !important;
   place-items: center;
   z-index: 3;
-  width: 36px !important;
-  height: 36px !important;
+  width: 40px !important;
+  height: 40px !important;
 }
 
 .product-image span {

@@ -4376,3 +4376,48 @@ button:disabled {
   color: #f7d6e0;
   transform: translateY(-1px);
 }
+/* =========================================
+   FIX — BOTÃO SAIR SEMPRE VISÍVEL
+   ========================================= */
+
+.admin-sidebar {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.admin-sidebar nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  padding-bottom: 12px;
+}
+
+/* scrollbar discreta */
+.admin-sidebar nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar nav::-webkit-scrollbar-thumb {
+  background: #3a3034;
+  border-radius: 999px;
+}
+
+.admin-sidebar > button {
+  flex-shrink: 0;
+  margin-top: 12px !important;
+  padding: 13px 12px;
+  border-top: 1px solid #2b2527;
+  border-radius: 0;
+  color: #b9adb2;
+}
+
+.admin-sidebar > button:hover {
+  color: #ff7da1;
+  background: #261a1f;
+}
